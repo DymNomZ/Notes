@@ -21,11 +21,15 @@ class NoteData extends ChangeNotifier{
     notifyListeners();
   }
 
-  void updateNote(Note note, String text){
+  void updateNote(Note note, String text, String title, Color color){
     for(int i = 0; i < NoteList.length; i++){
-      if(NoteList[i].id == note.id) NoteList[i].text = text;
-    }
+      if(NoteList[i].id == note.id) {
+        NoteList[i].text = text;
+        NoteList[i].title = title;
+        NoteList[i].color = color;
+      }
     notifyListeners();
+    }
   }
 
   void deleteNote(Note note){

@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'note.dart';
+import 'package:flutter/material.dart';
 
 class NotesDB{
 
@@ -12,7 +13,10 @@ class NotesDB{
     if(_notesBox.get("allnotes") != null){
       List<dynamic> savedNotesList = _notesBox.get("allnotes");
       for(int i = 0; i < savedNotesList.length; i++){
-        Note indivNote = Note(id: savedNotesList[i][0], text: savedNotesList[i][0]);
+        Note indivNote = Note(
+          id: savedNotesList[i][0], text: savedNotesList[i][0],
+          title: savedNotesList[i][0], color: savedNotesList[i][0],
+          );
         saveNotesFormatted.add(indivNote);
       }
     }
@@ -28,7 +32,9 @@ class NotesDB{
     for(var note in allNotes){
       int id = note.id;
       String text = note.text;
-      allNotesFormatted.add([id, text]);
+      String? title = note.title;
+      Color color = note.color;
+      allNotesFormatted.add([id, text, title, color]);
     }
 
     _notesBox.put('all', allNotesFormatted);

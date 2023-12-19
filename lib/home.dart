@@ -21,7 +21,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void createNewNote(){
-    Note newNote = Note(id: Provider.of<NoteData>(context, listen: false).getNoteList().length, text: '');
+    Note newNote = Note(id: Provider.of<NoteData>(context, listen: false).getNoteList().length, text: '', color: Colors.yellow.shade50);
     goToNotePage(newNote, true);
   }
 
@@ -38,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Consumer<NoteData>(
       builder: (context, value, child) => Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.yellow.shade50,
         title: const Text('Notes', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500),),
         centerTitle: true,
         leading: IconButton(
@@ -56,17 +56,6 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             icon: const Icon(
               Icons.more_horiz
-              )
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: IconButton(
-            onPressed: (){
-              print('lol');
-            },
-            icon: const Icon(
-              Icons.close
               )
             ),
           ),
@@ -88,7 +77,14 @@ class _MyHomePageState extends State<MyHomePage> {
             children: List.generate(
               value.getNoteList().length, 
               (index) => CupertinoListTile(
-                title: Text(value.getNoteList()[index].title!),
+                leading: Container(
+                  width: 13,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: value.getNoteList()[index].color
+                  ),
+                ),
+                title: Text(value.getNoteList()[index].title!, style: const TextStyle(fontWeight: FontWeight.w400),),
                 onTap: () => goToNotePage(value.getNoteList()[index], false),
                 trailing: IconButton(
                   onPressed: () {
