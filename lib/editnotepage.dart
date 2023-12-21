@@ -17,8 +17,6 @@ class _editNotePageState extends State<editNotePage> {
 
   QuillController _controller = QuillController.basic();
   TextEditingController _noteTitle = TextEditingController();
-  TextEditingController _hex = TextEditingController();
-  String? hexCode;
 
   @override
   void initState(){
@@ -57,7 +55,6 @@ class _editNotePageState extends State<editNotePage> {
   }
 
   void selectColors(){
-    _hex.clear();
     showDialog(
       context: context, 
       builder: (BuildContext context) {

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'notedata.dart';
 import 'note.dart';
 import 'editnotepage.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -30,7 +31,46 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void deleteNote(Note note){
-    Provider.of<NoteData>(context, listen: false).getNoteList().remove(note);
+    Provider.of<NoteData>(context, listen: false).deleteNote(note);
+  }
+
+  _launchURL() async {
+   final Uri url = Uri.parse('https://github.com/DymNomZ');
+   if (!await launchUrl(url)) {
+        throw Exception('Could not launch $url');
+    }
+}
+
+  void showInfo(){
+    showDialog(
+      context: context, 
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            height: 200.0,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                color: Colors.white,
+              ),
+            child: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text('☘ App Info ☘', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(10.0, 10, 10, 0),
+                  child: Text('Just a simple windows sticky notes-type clone! :D!\n\n Visit my Github profile:', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 14),),
+                ),
+                InkWell(
+                  onTap: () => _launchURL(),
+                  child: const Text('https://github.com/DymNomZ', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w400, fontSize: 14),)),
+              ],
+            ),
+          ),
+        );
+      }
+    );
   }
 
   @override
@@ -52,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.all(10.0),
             child: IconButton(
             onPressed: (){
-              print('lol');
+              showInfo();
             },
             icon: const Icon(
               Icons.more_horiz

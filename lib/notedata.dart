@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:notesclonedym/storednotes.dart';
 import 'note.dart';
 
@@ -18,6 +19,7 @@ class NoteData extends ChangeNotifier{
 
   void addNote(Note note){
     NoteList.add(note);
+    notesdb.notesBox.put("allnotes", note);
     notifyListeners();
   }
 
@@ -27,12 +29,19 @@ class NoteData extends ChangeNotifier{
         NoteList[i].text = text;
         NoteList[i].title = title;
         NoteList[i].color = color;
+        notesdb.notesBox.putAt(i, NoteList[i]);
       }
     notifyListeners();
     }
   }
 
   void deleteNote(Note note){
+    for(int i = 0; i < NoteList.length; i++){
+      if(NoteList[i].id == note.id) {
+        notesdb.notesBox.deleteAt(i);
+      }
+      notifyListeners();
+    }
     NoteList.remove(note);
     notifyListeners();
   }

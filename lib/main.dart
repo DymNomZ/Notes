@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:notesclonedym/color.g.dart';
+import 'package:notesclonedym/note.dart';
 import 'package:notesclonedym/splash.dart';
 import 'package:provider/provider.dart';
 import 'notedata.dart';
@@ -15,7 +17,9 @@ void main() async{
   }
 
   await Hive.initFlutter("C:/Users/User/Desktop/storednotes-Notes!");
-  await Hive.openBox('NotesDB');
+  Hive.registerAdapter(lolAdapter());
+  Hive.registerAdapter(NoteAdapter());
+  await Hive.openBox('notesDB');
 
   runApp(const MyApp());
 }
