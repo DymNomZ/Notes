@@ -16,12 +16,13 @@ void main() async{
     setWindowMinSize(const Size(400, 300));
   }
 
-  await Hive.initFlutter("C:/Users/User/Desktop/storednotes-Notes!");
+  await Hive.initFlutter("C:/Users/User/Documents/storednotes-Notes!");
   Hive.registerAdapter(lolAdapter());
   Hive.registerAdapter(NoteAdapter());
   await Hive.openBox('notesDB');
 
   runApp(const MyApp());
+
 }
 
 class MyApp extends StatelessWidget {
