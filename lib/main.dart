@@ -9,6 +9,20 @@ import 'notedata.dart';
 import 'package:window_size/window_size.dart';
 void main() async{
 
+  String path = '';
+  Map<String, String> envVars = Platform.environment;
+  if (Platform.isMacOS) {
+    path = envVars['HOME']!;
+  } else if (Platform.isLinux) {
+    path = envVars['HOME']!;
+  } else if (Platform.isWindows) {
+    path = envVars['UserProfile']!;
+  }
+
+  path = '${path.substring(0, 2)}/${path.substring(3, 8)}/${path.substring(9, 13)}/';
+
+  path = "${path}Documents/storednotes-Notes!";
+
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -16,7 +30,7 @@ void main() async{
     setWindowMinSize(const Size(400, 300));
   }
 
-  await Hive.initFlutter("C:/Users/User/Documents/storednotes-Notes!");
+  await Hive.initFlutter(path);
   Hive.registerAdapter(lolAdapter());
   Hive.registerAdapter(NoteAdapter());
   await Hive.openBox('notesDB');
