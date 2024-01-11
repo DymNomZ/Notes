@@ -238,6 +238,9 @@ class _editNotePageState extends State<editNotePage> {
           decoration: new InputDecoration.collapsed(
             hintText: 'Note title',
           ),
+          onChanged: (value) => {
+            widget.note.title = _noteTitle.text
+          },
         )
         : TextField(
           style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
@@ -246,6 +249,9 @@ class _editNotePageState extends State<editNotePage> {
           decoration: const InputDecoration.collapsed(
             hintText: '',
           ),
+          onChanged: (value) => {
+            widget.note.title = _noteTitle.text
+          },
         ),
         leading: IconButton(
           onPressed: (){
@@ -289,7 +295,7 @@ class _editNotePageState extends State<editNotePage> {
                         controller: _controller,
                         showAlignmentButtons: false,
                         showBackgroundColorButton: false,
-                        showBoldButton: false,
+                        showBoldButton: true,
                         showCenterAlignment: false,
                         showHeaderStyle: false,
                         showClearFormat: false,
@@ -298,7 +304,7 @@ class _editNotePageState extends State<editNotePage> {
                         showDirection: false,
                         showDividers: false,
                         showFontFamily: false,
-                        showFontSize: false,
+                        showFontSize: true,
                         showIndent: false,
                         showInlineCode: false,
                         showItalicButton: false,
@@ -313,8 +319,8 @@ class _editNotePageState extends State<editNotePage> {
                         showSearchButton: false,
                         showSmallButton: false,
                         showStrikeThrough: false,
-                        showSubscript: false,
-                        showSuperscript: false,
+                        showSubscript: true,
+                        showSuperscript: true,
                         showUnderLineButton: false,
                         showUndo: true,
                         showRedo: true,

@@ -15,7 +15,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-
   @override
   void initState(){
     super.initState();
@@ -109,34 +108,38 @@ class _MyHomePageState extends State<MyHomePage> {
            ? Padding(
              padding: const EdgeInsets.all(30.0),
              child: Center(
-               child: Text('Start writting!', 
+               child: Text('Create a note', 
                style: TextStyle(fontWeight: FontWeight.w400, color: Colors.grey.shade500)
                ),
              ),
            )
            : CupertinoListSection.insetGrouped(
-            children: List.generate(
-              value.getNoteList().length, 
-              (index) => CupertinoListTile(
-                leading: Container(
-                  width: 13,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: value.getNoteList()[index].color
+              children: List.generate(
+                value.getNoteList().length, 
+                (index) => CupertinoListTile(
+                  key: Key('$index'),
+                  leading: Container(
+                    width: 13,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: value.getNoteList()[index].color
+                    ),
                   ),
-                ),
-                title: Text(value.getNoteList()[index].title!, style: const TextStyle(fontWeight: FontWeight.w400),),
-                onTap: () => goToNotePage(value.getNoteList()[index], false),
-                trailing: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      deleteNote(value.getNoteList()[index]); 
-                    });
-                  },
-                  icon: const Icon(Icons.delete_forever)
-                ),
-              )),
-           )
+                  title: Text(value.getNoteList()[index].title!, style: const TextStyle(fontWeight: FontWeight.w400),),
+                  onTap: () => goToNotePage(value.getNoteList()[index], false),
+                  trailing: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          deleteNote(value.getNoteList()[index]); 
+                        });
+                      },
+                      icon: const Icon(Icons.delete_forever)
+                    ),
+                  ),
+                )),
+             ),
         ],
       ),
     )
