@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
    List<Note> loadNotes(){
      List<Note> saveNotesFormatted = [];
 
-     if(notesBox.get("allnotes") != null){
+     if(notesBox.isNotEmpty){
        List<dynamic> savedNotesList = List.of(notesBox.values);
        for(int i = 0; i < savedNotesList.length; i++){
          Note indivNote = Note(

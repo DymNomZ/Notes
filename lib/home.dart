@@ -117,7 +117,6 @@ class _MyHomePageState extends State<MyHomePage> {
               children: List.generate(
                 value.getNoteList().length, 
                 (index) => CupertinoListTile(
-                  key: Key('$index'),
                   leading: Container(
                     width: 13,
                     decoration: BoxDecoration(
@@ -127,16 +126,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   title: Text(value.getNoteList()[index].title!, style: const TextStyle(fontWeight: FontWeight.w400),),
                   onTap: () => goToNotePage(value.getNoteList()[index], false),
-                  trailing: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          deleteNote(value.getNoteList()[index]); 
-                        });
-                      },
-                      icon: const Icon(Icons.delete_forever)
-                    ),
+                  trailing: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        deleteNote(value.getNoteList()[index]); 
+                      });
+                    },
+                    icon: const Icon(Icons.delete_forever)
                   ),
                 )),
              ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:notesclonedym/storednotes.dart';
 import 'note.dart';
 
@@ -19,7 +18,7 @@ class NoteData extends ChangeNotifier{
 
   void addNote(Note note){
     NoteList.add(note);
-    notesdb.notesBox.put("allnotes", note);
+    notesdb.notesBox.put(note.id, note);
     notifyListeners();
   }
 
@@ -38,7 +37,7 @@ class NoteData extends ChangeNotifier{
   void deleteNote(Note note){
     for(int i = 0; i < NoteList.length; i++){
       if(NoteList[i].id == note.id) {
-        notesdb.notesBox.deleteAt(i);
+        notesdb.notesBox.delete(note.id);
       }
       notifyListeners();
     }

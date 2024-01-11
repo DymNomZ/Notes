@@ -30,7 +30,7 @@ void main() async{
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('Notes!');
-    setWindowMinSize(const Size(400, 300));
+    setWindowMinSize(const Size(500, 400));
   }
 
   await Hive.initFlutter(path);

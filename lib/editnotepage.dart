@@ -41,7 +41,7 @@ class _editNotePageState extends State<editNotePage> {
   void addNote(){
     Provider.of<NoteData>(context, listen: false).addNote(
       Note(
-        id: Provider.of<NoteData>(context, listen: false).getNoteList().length, text: _controller.document.toPlainText(),
+        id: UniqueKey().hashCode, text: _controller.document.toPlainText(),
         title: _noteTitle.text, color: widget.note.color
       )
       );
@@ -239,8 +239,8 @@ class _editNotePageState extends State<editNotePage> {
             hintText: 'Note title',
           ),
           onChanged: (value) => {
-            widget.note.title = _noteTitle.text
-          },
+             widget.note.title = _noteTitle.text
+         },
         )
         : TextField(
           style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w500),
@@ -250,7 +250,7 @@ class _editNotePageState extends State<editNotePage> {
             hintText: '',
           ),
           onChanged: (value) => {
-            widget.note.title = _noteTitle.text
+             widget.note.title = _noteTitle.text
           },
         ),
         leading: IconButton(
@@ -307,7 +307,7 @@ class _editNotePageState extends State<editNotePage> {
                         showFontSize: true,
                         showIndent: false,
                         showInlineCode: false,
-                        showItalicButton: false,
+                        showItalicButton: true,
                         showJustifyAlignment: false,
                         showLeftAlignment: false,
                         showLink: false,
