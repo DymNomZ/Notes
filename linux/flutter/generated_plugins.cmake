@@ -3,8 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  irondash_engine_context
-  super_native_extensions
+  bitsdojo_window_linux
+  isar_flutter_libs
   url_launcher_linux
   window_size
 )

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:notesclonedym/home.dart';
+import 'home.dart';
 
 class Splash extends StatefulWidget {
   const Splash({Key? key}) : super(key: key);

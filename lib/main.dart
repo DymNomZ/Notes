@@ -1,44 +1,21 @@
 import 'dart:io';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/adapters.dart';
-import 'package:notesclonedym/color.g.dart';
-import 'package:notesclonedym/note.dart';
-import 'package:notesclonedym/splash.dart';
-import 'package:provider/provider.dart';
-import 'notedata.dart';
+import 'splash.dart';
 import 'package:window_size/window_size.dart';
 void main() async{
-
-  String path = '';
-  String userName = '';
-  Map<String, String> envVars = Platform.environment;
-  if (Platform.isMacOS) {
-    path = envVars['HOME']!;
-  } else if (Platform.isLinux) {
-    path = envVars['HOME']!;
-  } else if (Platform.isWindows) {
-    path = envVars['UserProfile']!;
-  }
-  
-  userName = path.substring(9);
-  
-  path = '${path.substring(0, 2)}/${path.substring(3, 8)}/$userName/';
-  
-  path = "${path}Documents/storednotes-Notes!";
   
   WidgetsFlutterBinding.ensureInitialized();
-
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    setWindowTitle('Notes!');
-    setWindowMinSize(const Size(500, 400));
-  }
-
-  await Hive.initFlutter(path);
-  Hive.registerAdapter(lolAdapter());
-  Hive.registerAdapter(NoteAdapter());
-  await Hive.openBox('notesDB');
-
+  
   runApp(const MyApp());
+  doWhenWindowReady(() {
+  const initialSize = Size(350, 350);
+  appWindow.minSize = initialSize;
+  appWindow.size = initialSize;
+  appWindow.alignment = Alignment.center;
+  appWindow.show();
+});
+
 
 }
 
@@ -47,12 +24,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => NoteData(),
-      builder: (context, child) => const MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Splash(),
-      )
     );
   }
 }
