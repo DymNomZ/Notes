@@ -1,5 +1,8 @@
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:notesclonedym/classes/boxes.dart';
+import 'package:notesclonedym/classes/window.dart';
 import 'buttons/buttons.dart';
 import 'functions/functions.dart';
 import 'classes/classes.dart';
@@ -13,17 +16,29 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Note> filteredNotes = [];
+  List filteredNotes = [];
+  TextEditingController _titleController = TextEditingController();
+  TextEditingController _contentController = TextEditingController();
+  bool isEditing = false;
+  Window userWindow = (windowBox.isNotEmpty) ? windowBox.getAt(0) : Window(barColor: Colors.amber, bodyColor: Colors.white);
+  String newTitle = '';
+  String newContent = '';
+
+  fillNoteList(){
+    setState(() {
+      filteredNotes = noteBox.values.toList();
+    });
+  }
 
   @override
   void initState(){
     super.initState();
-    filteredNotes = sortToRecent();
+    fillNoteList();
   }
 
   void onSearchTextChanged(String searchText) {
     setState(() {
-      filteredNotes = sampleNotes
+      filteredNotes = noteBox.values
           .where((note) =>
               note.content.toLowerCase().contains(searchText.toLowerCase()) ||
               note.title.toLowerCase().contains(searchText.toLowerCase()))
@@ -31,69 +46,61 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void deleteNote(int index) {
-    setState(() {
-      Note note = filteredNotes[index];
-      sampleNotes.remove(note);
-      filteredNotes.removeAt(index);
-    });
+  void choseBodyColor() async {
+    final result = await showDialog(
+      context: context,
+      builder: (_) => const ChoseWindowColor(colorPart: 2),
+    ); 
+    if(result != null) {
+      if(windowBox.isEmpty){
+        setState(() {
+          userWindow.bodyColor = result;
+          windowBox.add(userWindow);
+        });
+      }
+      else{
+        setState(() {
+          userWindow.bodyColor = result;
+          userWindow.save();
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: userWindow.bodyColor,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const WindowTitle(),
+          WindowTitle(dialog: tempNoteDialog, bodydialog: choseBodyColor),
           SearchField(onChanged: onSearchTextChanged),
-          (sampleNotes.isNotEmpty)
+          (noteBox.isNotEmpty)
           ? Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(top: 30),
               itemCount: filteredNotes.length,
               itemBuilder: (context, index) {
+                Note currentNote = filteredNotes[index];
                 return Card(
                   margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                  color: Colors.lightBlue.shade200,
+                  color: currentNote.barColor,
                   elevation: 3,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                   child: Padding(
                     padding: const EdgeInsets.all(10.0),
                     child: ListTile(
-                      onTap: () async {
-                        /*final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (BuildContext context) =>
-                                EditScreen(note: filteredNotes[index]),
-                          ),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            int originalIndex =
-                                sampleNotes.indexOf(filteredNotes[index]);
-                
-                            sampleNotes[originalIndex] = Note(
-                                id: sampleNotes[originalIndex].id,
-                                title: result[0],
-                                content: result[1],
-                                modifiedTime: DateTime.now());
-                                
-                            filteredNotes[index] = Note(
-                                id: filteredNotes[index].id,
-                                title: result[0],
-                                content: result[1],
-                                modifiedTime: DateTime.now());
-                          });
-                        }*/
-                      },
+                      onTap: () {
+                        setState(() => isEditing = true);
+                        tempNoteDialog(currentNote);
+                        },
                       title: RichText(
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         text: TextSpan(
-                            text: '${filteredNotes[index].title} \n',
+                            text: '${currentNote.title} \n',
                             style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
@@ -101,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 height: 1.5),
                             children: [
                               TextSpan(
-                                text: filteredNotes[index].content,
+                                text: currentNote.content,
                                 style: const TextStyle(
                                     color: Colors.black,
                                     fontWeight: FontWeight.normal,
@@ -113,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(filteredNotes[index].modifiedTime)}',
+                          'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}',
                           style: TextStyle(
                               fontSize: 10,
                               fontStyle: FontStyle.italic,
@@ -126,7 +133,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         builder: (_) => const ConfirmDelete(),
                       );
                       if (result != null && result) {
-                        deleteNote(index);
+                        setState(() {
+                          filteredNotes.remove(currentNote);
+                          currentNote.delete();
+                        });
                       }
                     })
                 )));
@@ -143,6 +153,170 @@ class _MyHomePageState extends State<MyHomePage> {
            ),
         ],
       ),
+    );
+  }
+
+  tempNoteDialog([Note? note]){
+    showDialog(
+      context: context, 
+      builder: (BuildContext context) {
+        Color noteBarColor = Colors.yellow.shade50;
+        Color noteBodyColor = Colors.yellow.shade50;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Scaffold(
+              backgroundColor: (isEditing) ? note?.bodyColor : noteBodyColor,
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  WindowTitleBarBox(
+                    child: Row(
+                      children: [
+                        Container(
+                          color: (isEditing) ? note?.barColor : noteBarColor,
+                          child: Row(
+                            children: [
+                              Row(
+                                children: [
+                                  ReturnButton(onPressed: () {
+                                    if(_titleController.text.isNotEmpty || _contentController.text.isNotEmpty) {
+                                      if(isEditing) {
+                                        setState(() {
+                                          note?.title = _titleController.text;
+                                          note?.content = _contentController.text;
+                                          note?.modifiedTime = DateTime.now();
+                                          note?.save();
+                                          fillNoteList();
+                                          isEditing = false;
+                                        });
+                                      }
+                                      else {
+                                        setState(() {
+                                          final Note note = Note(
+                                            title: _titleController.text,
+                                            content: _contentController.text,
+                                            modifiedTime: DateTime.now(),
+                                            barColor: noteBarColor,
+                                            bodyColor: noteBodyColor
+                                          );
+                                          noteBox.add(note);
+                                          fillNoteList();
+                                          newTitle = '';
+                                          newContent = '';
+                                        });
+                                      }
+                                    }
+                                      Navigator.pop(context);
+                                    }
+                                  ),
+                                  ChoseColorButton(onPressed: () async {
+                                    final result = await showDialog(
+                                      context: context,
+                                      builder: (_) => ChoseWindowColor(colorPart: 1),
+                                    );
+                                    if(result != null) {
+                                      if(isEditing) {
+                                        setState(() {
+                                          note?.barColor = result;
+                                          note?.title = _titleController.text;
+                                          note?.content = _contentController.text;
+                                        });
+                                      }
+                                      else {
+                                        setState(() {
+                                          noteBarColor = result;
+                                          newTitle = _titleController.text;
+                                          newContent = _contentController.text;
+                                        });
+                                      }
+                                    }
+                                  }),
+                                  ChoseColorButton(onPressed: () async {
+                                    final result = await showDialog(
+                                      context: context,
+                                      builder: (_) => ChoseWindowColor(colorPart: 2),
+                                    );
+                                    if(result != null) {
+                                      if(isEditing) {
+                                        setState(() {
+                                          note?.bodyColor = result;
+                                          note?.title = _titleController.text;
+                                          note?.content = _contentController.text;
+                                        });
+                                      }
+                                      else {
+                                        setState(() {
+                                          noteBodyColor = result;
+                                          newTitle = _titleController.text;
+                                          newContent = _contentController.text;
+                                        });
+                                      }
+                                    }
+                                  })
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: MoveWindow(
+                            child: Container(
+                              //to be made a class
+                              color: (isEditing) ? note?.barColor : noteBarColor,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          //to be made a class
+                          color: (isEditing) ? note?.barColor : noteBarColor,
+                          child: Row(
+                            children: [
+                              Row(
+                                children: [
+                                  MinimizeWindowButton(),
+                                  MaximizeWindowButton(),
+                                  CloseWindowButton(),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: ListView(
+                      children: [
+                        TextField(
+                          cursorColor: Colors.black,
+                          controller: _titleController = TextEditingController(text: note?.title ?? newTitle),
+                          style: const TextStyle(color: Colors.black, fontSize: 20),
+                          decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Title',
+                              hintStyle: TextStyle(color: Colors.black, fontSize: 20)),
+                        ),
+                        TextField(
+                          cursorColor: Colors.black,
+                          controller: _contentController = TextEditingController(text: note?.content ?? newContent),
+                          style: const TextStyle(color: Colors.black, fontSize: 15),
+                          maxLines: null,
+                          decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Type something here',
+                              hintStyle: TextStyle(color: Colors.black, fontSize: 15)),
+                        ),
+                      ],
+                    ),
+                  ))
+                ],
+              ),
+            );
+          }
+        );
+      }
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notesclonedym/buttons/buttons.dart';
-import 'package:notesclonedym/classes/note.dart';
+import 'package:notesclonedym/classes/boxes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
   _launchURL() async {
@@ -10,8 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
     }
 }
 
-    List<Note> sortToRecent() {
-    List<Note> notes = sampleNotes;
+    List sortToRecent() {
+    List notes = noteBox.values.toList();
     notes.sort((a, b) => a.modifiedTime.compareTo(b.modifiedTime));
 
     return notes;
@@ -55,12 +55,8 @@ class _ShowInfoState extends State<ShowInfo> {
 }
 
 class ChoseWindowColor extends StatefulWidget {
-  Color color = ColorPad().retrieveSelectedColor;
-  ChoseWindowColor({super.key});
-
-  Color get retrieveSelectedColor {
-    return color;
-  }
+  final int colorPart;
+  const ChoseWindowColor({required this.colorPart, super.key});
 
   @override
   State<ChoseWindowColor> createState() => _ChoseWindowColorState();
@@ -78,9 +74,13 @@ class _ChoseWindowColorState extends State<ChoseWindowColor> {
               ),
             child: Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text('Select Colors', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Text(
+                    (widget.colorPart == 1)
+                    ? 'Select Bar Color'
+                    : 'Select Body Color'
+                    , style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
                 ),
                 Row(
                   children: [

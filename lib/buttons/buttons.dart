@@ -11,6 +11,7 @@ class AddNoteButton extends StatelessWidget {
       icon: const Icon(
         Icons.add,
         size: 20,
+        color: Colors.black,
       )
     );
   }
@@ -27,6 +28,7 @@ class ShowInfoButton extends StatelessWidget {
       icon: const Icon(
         Icons.more_horiz,
         size: 20,
+        color: Colors.black,
       )
     );
   }
@@ -43,6 +45,7 @@ class ChoseColorButton extends StatelessWidget {
       icon: const Icon(
         Icons.palette,
         size: 20,
+        color: Colors.black,
       )
     );
   }
@@ -50,12 +53,7 @@ class ChoseColorButton extends StatelessWidget {
 
 class ColorPad extends StatefulWidget {
   final Color? color;
-  Color selectedColor = Colors.white;
-  ColorPad({super.key, this.color});
-
-  Color get retrieveSelectedColor {
-    return selectedColor;
-  }
+  const ColorPad({super.key, this.color});
 
   @override
   State<ColorPad> createState() => _ColorPadState();
@@ -68,7 +66,7 @@ class _ColorPadState extends State<ColorPad> {
       child: InkWell(
         onTap: () {
           setState(() {
-            widget.selectedColor = widget.color!;
+            Navigator.pop(context, widget.color);
           });
         },
         child: Container(
@@ -92,6 +90,7 @@ class DeleteNoteButton extends StatelessWidget {
       icon: const Icon(
         Icons.delete,
         size: 25,
+        color: Colors.black,
       )
     );
   }
@@ -107,6 +106,7 @@ class ConfirmButton extends StatelessWidget {
       icon: const Icon(
         Icons.check,
         size: 25,
+        color: Colors.black,
       )
     );
   }
@@ -122,6 +122,7 @@ class CancelButton extends StatelessWidget {
       icon: const Icon(
         Icons.close,
         size: 25,
+        color: Colors.black,
       )
     );
   }
@@ -140,6 +141,7 @@ class ReturnButton extends StatelessWidget {
         icon: const Icon(
           Icons.arrow_back_ios,
           size: 20,
+          color: Colors.black,
         )
       ),
     );

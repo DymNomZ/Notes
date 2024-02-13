@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notesclonedym/classes/note.dart';
 
 import 'classes/classes.dart';
 
@@ -20,7 +21,7 @@ class _EditNoteState extends State<EditNote> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const EditWindowTitle(),
+          //const EditWindowTitle(),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 10),

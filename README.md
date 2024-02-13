@@ -1,3 +1,3 @@
-#🍀 Notes! - A Windows sticky-notes clone 🍀
+#🍀 Notes! - A Windows notes app 🍀
 
-Simple Notes app works similarly to Sticky Notes by Windows! :D.
+Simple Notes app for Windows! :D.
