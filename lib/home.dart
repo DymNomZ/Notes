@@ -23,6 +23,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Window userWindow = (windowBox.isNotEmpty) ? windowBox.getAt(0) : Window(barColor: Colors.amber, bodyColor: Colors.white);
   String newTitle = '';
   String newContent = '';
+  int axisCount = 1;
+  double aspectRatio = 2.8;
 
   fillNoteList(){
     setState(() {
@@ -49,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void choseBodyColor() async {
     final result = await showDialog(
       context: context,
-      builder: (_) => const ChoseWindowColor(colorPart: 2),
+      builder: (_) => ChoseWindowColor(colorPart: 2, currentColor: userWindow.bodyColor),
     ); 
     if(result != null) {
       if(windowBox.isEmpty){
@@ -67,6 +69,23 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void changeGridValues(){
+    if(axisCount == 1 && aspectRatio == 2.8) {
+      setState(() {
+        axisCount = 4;
+        aspectRatio = 3.1;
+        appWindow.maximizeOrRestore();
+      });
+    }
+    else {
+      setState(() {
+        axisCount = 1;
+        aspectRatio = 2.8;
+        appWindow.maximizeOrRestore();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,12 +93,15 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          WindowTitle(dialog: tempNoteDialog, bodydialog: choseBodyColor),
+          WindowTitle(dialog: tempNoteDialog, bodydialog: choseBodyColor, gridFunction: changeGridValues),
           SearchField(onChanged: onSearchTextChanged),
           (noteBox.isNotEmpty)
           ? Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.only(top: 30),
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount (
+                crossAxisCount: axisCount,
+                childAspectRatio: aspectRatio
+              ),
               itemCount: filteredNotes.length,
               itemBuilder: (context, index) {
                 Note currentNote = filteredNotes[index];
@@ -120,7 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}',
+                          'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
                           style: TextStyle(
                               fontSize: 10,
                               fontStyle: FontStyle.italic,
@@ -143,11 +165,12 @@ class _MyHomePageState extends State<MyHomePage> {
               }
             )
           )
-          : Padding(
-             padding: const EdgeInsets.all(30.0),
+          : const Padding(
+             padding: EdgeInsets.all(30.0),
              child: Center(
                child: Text('Create a note', 
-               style: TextStyle(fontWeight: FontWeight.w400, color: Colors.grey.shade500)
+               style: TextStyle(fontWeight: FontWeight.w400, 
+               color: Colors.black)
                ),
              ),
            ),
@@ -181,14 +204,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ReturnButton(onPressed: () {
                                     if(_titleController.text.isNotEmpty || _contentController.text.isNotEmpty) {
                                       if(isEditing) {
-                                        setState(() {
-                                          note?.title = _titleController.text;
-                                          note?.content = _contentController.text;
-                                          note?.modifiedTime = DateTime.now();
-                                          note?.save();
-                                          fillNoteList();
-                                          isEditing = false;
-                                        });
+                                        if(note?.title != _titleController.text || note?.content != _contentController.text) {
+                                          setState(() {
+                                            note?.title = _titleController.text;
+                                            note?.content = _contentController.text;
+                                            note?.modifiedTime = DateTime.now();
+                                            note?.save();
+                                            fillNoteList();
+                                            isEditing = false;
+                                          });
+                                        }
                                       }
                                       else {
                                         setState(() {
@@ -197,7 +222,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                             content: _contentController.text,
                                             modifiedTime: DateTime.now(),
                                             barColor: noteBarColor,
-                                            bodyColor: noteBodyColor
+                                            bodyColor: noteBodyColor,
+                                            creationTime: DateTime.now(),
                                           );
                                           noteBox.add(note);
                                           fillNoteList();
@@ -212,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ChoseColorButton(onPressed: () async {
                                     final result = await showDialog(
                                       context: context,
-                                      builder: (_) => ChoseWindowColor(colorPart: 1),
+                                      builder: (_) => ChoseWindowColor(colorPart: 1, currentColor: note!.barColor),
                                     );
                                     if(result != null) {
                                       if(isEditing) {
@@ -234,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ChoseColorButton(onPressed: () async {
                                     final result = await showDialog(
                                       context: context,
-                                      builder: (_) => ChoseWindowColor(colorPart: 2),
+                                      builder: (_) => ChoseWindowColor(colorPart: 2, currentColor: note!.bodyColor),
                                     );
                                     if(result != null) {
                                       if(isEditing) {

@@ -8,7 +8,8 @@ import 'package:notesclonedym/functions/functions.dart';
 class WindowTitle extends StatefulWidget {
   final VoidCallback dialog;
   final VoidCallback bodydialog;
-  const WindowTitle({required this.dialog, required this.bodydialog, super.key});
+  final VoidCallback gridFunction;
+  const WindowTitle({required this.dialog, required this.bodydialog, required this.gridFunction, super.key});
 
   @override
   State<WindowTitle> createState() => _WindowTitleState();
@@ -42,7 +43,7 @@ class _WindowTitleState extends State<WindowTitle> {
                     ChoseColorButton(onPressed: () async {
                       final result = await showDialog(
                         context: context,
-                        builder: (_) => const ChoseWindowColor(colorPart: 1),
+                        builder: (_) => ChoseWindowColor(colorPart: 1, currentColor: userWindow.barColor),
                       ); 
                       if(result != null) {
                         if(windowBox.isEmpty){
@@ -80,8 +81,8 @@ class _WindowTitleState extends State<WindowTitle> {
               children: [
                 Row(
                   children: [
-                    MinimizeWindowButton(colors: notesdefault),
-                    MaximizeWindowButton(colors: notesdefault),
+                    MinimizeWindowButton(colors: notesdefault, onPressed: widget.gridFunction,),
+                    MaximizeWindowButton(colors: notesdefault, onPressed: widget.gridFunction,),
                     CloseWindowButton(colors: notesdefault),
                   ],
                 ),

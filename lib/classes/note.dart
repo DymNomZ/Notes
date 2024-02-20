@@ -21,12 +21,16 @@ class Note extends HiveObject{
   @HiveField(4)
   Color bodyColor;
 
+  @HiveField(5)
+  DateTime creationTime;
+
   Note({
     required this.title,
     required this.content,
     required this.modifiedTime,
     required this.barColor,
-    required this.bodyColor
+    required this.bodyColor,
+    required this.creationTime
   });
   
 }
