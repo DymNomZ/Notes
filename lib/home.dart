@@ -82,16 +82,15 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         axisCount = 4;
         aspectRatio = 3.1;
-        appWindow.maximizeOrRestore();
       });
     }
     else {
       setState(() {
         axisCount = 1;
         aspectRatio = 2.8;
-        appWindow.maximizeOrRestore();
       });
     }
+    appWindow.maximizeOrRestore();
   }
 
   @override
@@ -131,16 +130,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         overflow: TextOverflow.ellipsis,
                         text: TextSpan(
                             text: '${currentNote.title} \n',
-                            style: const TextStyle(
-                                color: Colors.black,
+                            style: TextStyle(
+                                color: cardDarkMode(currentNote),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                                 height: 1.5),
                             children: [
                               TextSpan(
                                 text: currentNote.content,
-                                style: const TextStyle(
-                                    color: Colors.black,
+                                style: TextStyle(
+                                    color: cardDarkMode(currentNote),
                                     fontWeight: FontWeight.normal,
                                     fontSize: 13,
                                     height: 1.5),
@@ -154,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           style: TextStyle(
                               fontSize: 10,
                               fontStyle: FontStyle.italic,
-                              color: Colors.grey.shade800),
+                              color: cardDarkMode(currentNote)),
                         ),
                       ),
                       trailing: DeleteNoteButton(onPressed: () async {
@@ -168,17 +167,17 @@ class _MyHomePageState extends State<MyHomePage> {
                           currentNote.delete();
                         });
                       }
-                    })
+                    }, note: currentNote,)
                 )));
               }
             )
           )
-          : const Padding(
-             padding: EdgeInsets.all(30.0),
+          : Padding(
+             padding: const EdgeInsets.all(30.0),
              child: Center(
                child: Text('Create a note', 
                style: TextStyle(fontWeight: FontWeight.w400, 
-               color: Colors.black)
+               color: windowBodyDarkMode())
                ),
              ),
            ),
@@ -193,6 +192,8 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (BuildContext context) {
         Color noteBarColor = Colors.yellow.shade50;
         Color noteBodyColor = Colors.yellow.shade50;
+        Color newNoteBarColor = DymNomZ;
+        Color newNoteBodyColor = DymNomZ;
         return StatefulBuilder(
           builder: (context, setState) {
             return Scaffold(
@@ -218,7 +219,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                             note?.content = _contentController.text;
                                             note?.modifiedTime = DateTime.now();
                                             note?.save();
-                                            fillNoteList();
                                             isEditing = false;
                                           });
                                         }
@@ -235,7 +235,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                             creationTime: DateTime.now(),
                                           );
                                           noteBox.add(note);
-                                          fillNoteList();
                                           newTitle = '';
                                           newContent = '';
                                           setState(() => isEditing = false);
@@ -245,7 +244,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       setState(() => isEditing = false);
                                       fillNoteList();
                                       Navigator.pop(context);
-                                    }
+                                    }, note: note, color: newNoteBarColor, 
                                   ),
                                   ChoseColorButton(onPressed: () async {
                                     final result = await showDialog(
@@ -254,6 +253,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       ? ChoseWindowColor(colorPart: 1, currentColor: note!.barColor)
                                       : ChoseWindowColor(colorPart: 1, currentColor: noteBarColor,)
                                     );
+                                    setState(() => newNoteBarColor = result);
                                     if(result != null) {
                                       if(isEditing) {
                                         setState(() {
@@ -271,14 +271,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                         });
                                       }
                                     }
-                                  }),
+                                  }, darkModeType: 2, note: note, color: newNoteBarColor),
                                   ChoseColorButton(onPressed: () async {
                                     final result = await showDialog(
                                       context: context,
                                       builder: (_) => (isEditing)
-                                      ? ChoseWindowColor(colorPart: 1, currentColor: note!.barColor)
-                                      : ChoseWindowColor(colorPart: 1, currentColor: noteBarColor,)
+                                      ? ChoseWindowColor(colorPart: 2, currentColor: note!.bodyColor)
+                                      : ChoseWindowColor(colorPart: 2, currentColor: noteBodyColor,)
                                     );
+                                    setState(() => newNoteBodyColor = result);
                                     if(result != null) {
                                       if(isEditing) {
                                         setState(() {
@@ -296,7 +297,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         });
                                       }
                                     }
-                                  })
+                                  }, darkModeType: 2, note: note, color: newNoteBarColor)
                                 ],
                               ),
                             ],
@@ -317,9 +318,9 @@ class _MyHomePageState extends State<MyHomePage> {
                             children: [
                               Row(
                                 children: [
-                                  MinimizeWindowButton(),
-                                  MaximizeWindowButton(),
-                                  CloseWindowButton(),
+                                  MinimizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
+                                  MaximizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
+                                  CloseWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
                                 ],
                               ),
                             ],
@@ -334,23 +335,23 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: ListView(
                       children: [
                         TextField(
-                          cursorColor: Colors.black,
+                          cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
                           controller: _titleController = TextEditingController(text: note?.title ?? newTitle),
-                          style: const TextStyle(color: Colors.black, fontSize: 20),
-                          decoration: const InputDecoration(
+                          style: TextStyle(color: noteBodyDarkMode(note, newNoteBodyColor), fontSize: 20),
+                          decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Title',
-                              hintStyle: TextStyle(color: Colors.black, fontSize: 20)),
+                              hintStyle: TextStyle(color: noteBodyDarkMode(note, newNoteBodyColor), fontSize: 20)),
                         ),
                         TextField(
-                          cursorColor: Colors.black,
+                          cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
                           controller: _contentController = TextEditingController(text: note?.content ?? newContent),
-                          style: const TextStyle(color: Colors.black, fontSize: 15),
+                          style: TextStyle(color: noteBodyDarkMode(note, newNoteBodyColor), fontSize: 15),
                           maxLines: null,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                               border: InputBorder.none,
                               hintText: 'Type something here',
-                              hintStyle: TextStyle(color: Colors.black, fontSize: 15)),
+                              hintStyle: TextStyle(color: noteBodyDarkMode(note, newNoteBodyColor), fontSize: 15)),
                         ),
                       ],
                     ),

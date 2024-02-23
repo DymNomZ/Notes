@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:notesclonedym/classes/note.dart';
+import 'package:notesclonedym/functions/functions.dart';
 
 class AddNoteButton extends StatelessWidget {
   final void Function() onPressed;
@@ -8,10 +10,10 @@ class AddNoteButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed, 
-      icon: const Icon(
+      icon: Icon(
         Icons.add,
         size: 20,
-        color: Colors.black,
+        color: windowBarDarkMode(),
       )
     );
   }
@@ -25,10 +27,10 @@ class ShowInfoButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed, 
-      icon: const Icon(
+      icon: Icon(
         Icons.more_horiz,
         size: 20,
-        color: Colors.black,
+        color: windowBarDarkMode(),
       )
     );
   }
@@ -36,16 +38,19 @@ class ShowInfoButton extends StatelessWidget {
 
 class ChoseColorButton extends StatelessWidget {
   final void Function() onPressed;
-  const ChoseColorButton({required this.onPressed, super.key});
+  final int darkModeType;
+  final Note? note;
+  final Color color;
+  const ChoseColorButton({required this.onPressed, required this.darkModeType, this.note, required this.color, super.key});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed, 
-      icon: const Icon(
+      icon: Icon(
         Icons.palette,
         size: 20,
-        color: Colors.black,
+        color: (darkModeType == 1) ? windowBarDarkMode() : noteBarDarkMode(note, color),
       )
     );
   }
@@ -81,16 +86,17 @@ class _ColorPadState extends State<ColorPad> {
 
 class DeleteNoteButton extends StatelessWidget {
   final void Function() onPressed;
-  const DeleteNoteButton({required this.onPressed, super.key});
+  final Note note;
+  const DeleteNoteButton({required this.onPressed, required this.note, super.key});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed, 
-      icon: const Icon(
+      icon: Icon(
         Icons.delete,
         size: 25,
-        color: Colors.black,
+        color: cardDarkMode(note)
       )
     );
   }
@@ -130,7 +136,9 @@ class CancelButton extends StatelessWidget {
 
 class ReturnButton extends StatelessWidget {
   final void Function() onPressed;
-  const ReturnButton({super.key, required this.onPressed});
+  final Note? note;
+  final Color color;
+  const ReturnButton({super.key, required this.onPressed, required this.note, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -138,10 +146,10 @@ class ReturnButton extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4),
       child: IconButton(
         onPressed: onPressed, 
-        icon: const Icon(
+        icon: Icon(
           Icons.arrow_back_ios,
           size: 20,
-          color: Colors.black,
+          color: noteBarDarkMode(note, color),
         )
       ),
     );

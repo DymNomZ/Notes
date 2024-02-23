@@ -1,8 +1,12 @@
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:notesclonedym/buttons/buttons.dart';
 import 'package:notesclonedym/classes/boxes.dart';
+import 'package:notesclonedym/classes/note.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+  Color DymNomZ =  const Color(0xFF0BFF00); // Easter Egg :p
 
   _launchURL() async {
    final Uri url = Uri.parse('https://github.com/DymNomZ');
@@ -16,6 +20,99 @@ import 'package:url_launcher/url_launcher.dart';
     notes.sort((a, b) => a.modifiedTime.compareTo(b.modifiedTime));
 
     return notes;
+  }
+
+  Color windowBarDarkMode(){
+    if (windowBox.get(0).barColor.computeLuminance() > 0.2) {
+      return Colors.black;
+    }
+    else {
+      return Colors.white;
+    }
+  }
+
+  Color windowBodyDarkMode(){
+    if (windowBox.get(0).bodyColor.computeLuminance() > 0.2) {
+      return Colors.black;
+    }
+    else {
+      return Colors.white;
+    }
+  }
+
+  WindowButtonColors minMaxCloseDarkMode(){
+    if (windowBox.get(0).barColor.computeLuminance() > 0.2) {
+      return WindowButtonColors(iconNormal: Colors.black);
+    }
+    else {
+      return WindowButtonColors(iconNormal: Colors.white);
+    }
+  }
+
+    WindowButtonColors minMaxCloseDarkModeNote(Note? note, Color result){
+    if (note != null) {
+      if (note.barColor.computeLuminance() > 0.2) {
+        return WindowButtonColors(iconNormal: Colors.black);
+      }
+      else {
+        return WindowButtonColors(iconNormal: Colors.white);
+      }
+    }
+    else{
+      if (result.computeLuminance() > 0.2) {
+        return WindowButtonColors(iconNormal: Colors.black);
+      }
+      else {
+        return WindowButtonColors(iconNormal: Colors.white);
+      }
+    }
+  }
+
+  Color cardDarkMode(Note note){
+    if (note.barColor.computeLuminance() > 0.2) {
+      return Colors.black;
+    }
+    else {
+      return Colors.white;
+    }
+  }
+
+  Color noteBarDarkMode(Note? note, Color result){
+    if (note != null) {
+      if (note.barColor.computeLuminance() > 0.2) {
+        return Colors.black;
+      }
+      else {
+        return Colors.white;
+      }
+    }
+    else{
+      if (result.computeLuminance() > 0.2) {
+        return Colors.black;
+      }
+      else {
+        return Colors.white;
+      }
+    }
+  }
+
+  Color noteBodyDarkMode(Note? note, Color result){
+    if (note != null) {
+      if (note.bodyColor.computeLuminance() > 0.2) {
+        return Colors.black;
+      }
+      else {
+        return Colors.white;
+      }
+    }
+    else{
+      if (result.computeLuminance() > 0.2) {
+        return Colors.black;
+      }
+      else {
+        return Colors.white;
+      }
+    }
   }
 
 class ShowInfo extends StatefulWidget {
@@ -134,7 +231,6 @@ class ChooseHexColor extends StatefulWidget {
 }
 
 class _ChooseHexColorState extends State<ChooseHexColor> {
-  Color customColor =  const Color(0xFF0BFF00); // Easter Egg :p
 
   @override
   Widget build(BuildContext context) {
@@ -219,6 +315,7 @@ class _ConfirmDeleteState extends State<ConfirmDelete> {
     return Dialog(
       child: Container(
             height: 100,
+            width: 200,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(15.0)),
                 color: Colors.white,

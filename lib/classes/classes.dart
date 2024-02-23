@@ -17,9 +17,6 @@ class WindowTitle extends StatefulWidget {
 
 class _WindowTitleState extends State<WindowTitle> {
   Window userWindow = windowBox.get(0);
-  WindowButtonColors notesdefault = WindowButtonColors(
-    iconNormal: Colors.black
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +48,8 @@ class _WindowTitleState extends State<WindowTitle> {
                           userWindow.save();
                         });
                       }
-                    }),
-                    ChoseColorButton(onPressed: widget.bodydialog)
+                    }, darkModeType: 1, color: DymNomZ),
+                    ChoseColorButton(onPressed: widget.bodydialog, darkModeType: 1, color: DymNomZ)
                   ],
                 ),
               ],
@@ -73,9 +70,9 @@ class _WindowTitleState extends State<WindowTitle> {
               children: [
                 Row(
                   children: [
-                    MinimizeWindowButton(colors: notesdefault, onPressed: widget.gridFunction,),
-                    MaximizeWindowButton(colors: notesdefault, onPressed: widget.gridFunction,),
-                    CloseWindowButton(colors: notesdefault),
+                    MinimizeWindowButton(colors: minMaxCloseDarkMode()),
+                    MaximizeWindowButton(colors: minMaxCloseDarkMode(), onPressed: widget.gridFunction,),
+                    CloseWindowButton(colors: minMaxCloseDarkMode()),
                   ],
                 ),
               ],
@@ -100,22 +97,22 @@ class _SearchFieldState extends State<SearchField> {
   Widget build(BuildContext context) {
     return TextField(
       onChanged: widget.onChanged,
-      style: const TextStyle(fontSize: 14, color: Colors.black),
-      decoration: const InputDecoration(
-        contentPadding: EdgeInsets.symmetric(vertical: 8),
+      style: TextStyle(fontSize: 14, color: windowBodyDarkMode()),
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
         hintText: "Search",
-        hintStyle: TextStyle(color: Colors.black),
+        hintStyle: TextStyle(color: windowBodyDarkMode()),
         prefixIcon:  Icon(
           Icons.search,
-          color: Colors.black,
+          color: windowBodyDarkMode(),
           size: 20
         ),
         fillColor: Colors.transparent,
         filled: true,
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.transparent),
         ),
-        enabledBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.transparent),
         ),
       ),
