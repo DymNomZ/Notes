@@ -20,7 +20,7 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _titleController = TextEditingController();
   TextEditingController _contentController = TextEditingController();
   bool isEditing = false;
-  Window userWindow = (windowBox.isNotEmpty) ? windowBox.getAt(0) : Window(barColor: Colors.amber, bodyColor: Colors.white);
+  Window userWindow = Window(barColor: Colors.amber, bodyColor: Colors.white);
   String newTitle = '';
   String newContent = '';
   int axisCount = 1;
@@ -32,40 +32,48 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  checkWindowBox(){
+    if(windowBox.isNotEmpty) {
+      setState(() {
+        userWindow = windowBox.get(0);
+      });
+    }
+    else{
+      setState(() {
+        windowBox.put(0, userWindow);
+      });
+    }
+  }
+
   @override
   void initState(){
     super.initState();
     fillNoteList();
+    checkWindowBox();
   }
 
   void onSearchTextChanged(String searchText) {
     setState(() {
       filteredNotes = noteBox.values
-          .where((note) =>
-              note.content.toLowerCase().contains(searchText.toLowerCase()) ||
-              note.title.toLowerCase().contains(searchText.toLowerCase()))
-          .toList();
+      .where((note) =>
+          note.content.toLowerCase().contains(searchText.toLowerCase()) ||
+          note.title.toLowerCase().contains(searchText.toLowerCase()))
+      .toList();
     });
   }
 
   void choseBodyColor() async {
+    checkWindowBox();
     final result = await showDialog(
       context: context,
       builder: (_) => ChoseWindowColor(colorPart: 2, currentColor: userWindow.bodyColor),
     ); 
     if(result != null) {
-      if(windowBox.isEmpty){
-        setState(() {
-          userWindow.bodyColor = result;
-          windowBox.add(userWindow);
-        });
-      }
-      else{
         setState(() {
           userWindow.bodyColor = result;
           userWindow.save();
+          checkWindowBox();
         });
-      }
     }
   }
 
@@ -214,6 +222,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                             isEditing = false;
                                           });
                                         }
+                                        setState(() => isEditing = false);
                                       }
                                       else {
                                         setState(() {
@@ -229,16 +238,21 @@ class _MyHomePageState extends State<MyHomePage> {
                                           fillNoteList();
                                           newTitle = '';
                                           newContent = '';
+                                          setState(() => isEditing = false);
                                         });
                                       }
                                     }
+                                      setState(() => isEditing = false);
+                                      fillNoteList();
                                       Navigator.pop(context);
                                     }
                                   ),
                                   ChoseColorButton(onPressed: () async {
                                     final result = await showDialog(
                                       context: context,
-                                      builder: (_) => ChoseWindowColor(colorPart: 1, currentColor: note!.barColor),
+                                      builder: (_) => (isEditing)
+                                      ? ChoseWindowColor(colorPart: 1, currentColor: note!.barColor)
+                                      : ChoseWindowColor(colorPart: 1, currentColor: noteBarColor,)
                                     );
                                     if(result != null) {
                                       if(isEditing) {
@@ -246,6 +260,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           note?.barColor = result;
                                           note?.title = _titleController.text;
                                           note?.content = _contentController.text;
+                                          note?.save();
                                         });
                                       }
                                       else {
@@ -260,7 +275,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ChoseColorButton(onPressed: () async {
                                     final result = await showDialog(
                                       context: context,
-                                      builder: (_) => ChoseWindowColor(colorPart: 2, currentColor: note!.bodyColor),
+                                      builder: (_) => (isEditing)
+                                      ? ChoseWindowColor(colorPart: 1, currentColor: note!.barColor)
+                                      : ChoseWindowColor(colorPart: 1, currentColor: noteBarColor,)
                                     );
                                     if(result != null) {
                                       if(isEditing) {
@@ -268,6 +285,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           note?.bodyColor = result;
                                           note?.title = _titleController.text;
                                           note?.content = _contentController.text;
+                                          note?.save();
                                         });
                                       }
                                       else {

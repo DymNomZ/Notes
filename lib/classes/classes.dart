@@ -16,7 +16,7 @@ class WindowTitle extends StatefulWidget {
 }
 
 class _WindowTitleState extends State<WindowTitle> {
-  Window userWindow = (windowBox.isNotEmpty) ? windowBox.getAt(0) : Window(barColor: Colors.amber, bodyColor: Colors.white);
+  Window userWindow = windowBox.get(0);
   WindowButtonColors notesdefault = WindowButtonColors(
     iconNormal: Colors.black
   );
@@ -46,18 +46,10 @@ class _WindowTitleState extends State<WindowTitle> {
                         builder: (_) => ChoseWindowColor(colorPart: 1, currentColor: userWindow.barColor),
                       ); 
                       if(result != null) {
-                        if(windowBox.isEmpty){
-                          setState(() {
-                            userWindow.barColor = result;
-                            windowBox.add(userWindow);
-                          });
-                        }
-                        else{
-                          setState(() {
-                            userWindow.barColor = result;
-                            userWindow.save();
-                          });
-                        }
+                        setState(() {
+                          userWindow.barColor = result;
+                          userWindow.save();
+                        });
                       }
                     }),
                     ChoseColorButton(onPressed: widget.bodydialog)
