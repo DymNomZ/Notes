@@ -24,7 +24,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String newTitle = '';
   String newContent = '';
   int axisCount = 1;
-  double aspectRatio = 2.8;
+  double aspectRatio = 2.5;
 
   fillNoteList(){
     setState(() {
@@ -78,7 +78,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void changeGridValues(){
-    if(axisCount == 1 && aspectRatio == 2.8) {
+    print('$axisCount $aspectRatio');
+    if(axisCount == 1 && aspectRatio == 2.5) {
       setState(() {
         axisCount = 4;
         aspectRatio = 3.1;
@@ -87,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
     else {
       setState(() {
         axisCount = 1;
-        aspectRatio = 2.8;
+        aspectRatio = 2.5;
       });
     }
     appWindow.maximizeOrRestore();
@@ -220,9 +221,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                             note?.modifiedTime = DateTime.now();
                                             note?.save();
                                             isEditing = false;
+                                            fillNoteList();
                                           });
                                         }
                                         setState(() => isEditing = false);
+                                        fillNoteList();
                                       }
                                       else {
                                         setState(() {
@@ -238,6 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           newTitle = '';
                                           newContent = '';
                                           setState(() => isEditing = false);
+                                          fillNoteList();
                                         });
                                       }
                                     }
@@ -253,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       ? ChoseWindowColor(colorPart: 1, currentColor: note!.barColor)
                                       : ChoseWindowColor(colorPart: 1, currentColor: noteBarColor,)
                                     );
-                                    setState(() => newNoteBarColor = result);
+                                    setState(() => newNoteBarColor = result ?? noteBarColor);
                                     if(result != null) {
                                       if(isEditing) {
                                         setState(() {
@@ -279,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       ? ChoseWindowColor(colorPart: 2, currentColor: note!.bodyColor)
                                       : ChoseWindowColor(colorPart: 2, currentColor: noteBodyColor,)
                                     );
-                                    setState(() => newNoteBodyColor = result);
+                                    setState(() => newNoteBodyColor = result ?? noteBodyColor);
                                     if(result != null) {
                                       if(isEditing) {
                                         setState(() {
@@ -319,7 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               Row(
                                 children: [
                                   MinimizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
-                                  MaximizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
+                                  MaximizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor), onPressed: changeGridValues),
                                   CloseWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
                                 ],
                               ),

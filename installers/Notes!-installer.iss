@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Notes!"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "3.0.0"
 #define MyAppPublisher "DymNomZ@GitHub"
 #define MyAppURL "https://github.com/DymNomZ/NotesClone/"
 #define MyAppExeName "notesclonedym.exe"
@@ -10,7 +10,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{B792A57C-8B2A-4330-87CD-945721EA2ABE}
+AppId={{2A4F8FA2-403B-47CD-AF1C-74BB3B4D742D}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -39,12 +39,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\bitsdojo_window_windows_plugin.lib"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\irondash_engine_context_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.exp"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.exp"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.lib"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\super_native_extensions.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\super_native_extensions_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\window_size_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
