@@ -78,7 +78,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void changeGridValues(){
-    print('$axisCount $aspectRatio');
     if(axisCount == 1 && aspectRatio == 2.5) {
       setState(() {
         axisCount = 4;
