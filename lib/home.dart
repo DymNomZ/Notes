@@ -82,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if(axisCount == 1 && aspectRatio == 2.5) {
       setState(() {
         axisCount = 4;
-        aspectRatio = 3.1;
+        aspectRatio = 2.8;
       });
     }
     else {
