@@ -5,6 +5,8 @@ import 'package:notesclonedym/buttons/buttons.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/note.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:math';
+import 'package:notesclonedym/variables.dart';
 
   Color DymNomZ =  const Color(0xFF0BFF00); // Easter Egg :p
 
@@ -115,6 +117,10 @@ import 'package:url_launcher/url_launcher.dart';
     }
   }
 
+  String getExitText(){
+    return exitText[Random().nextInt(exitText.length)];
+  }
+
 class ShowInfo extends StatefulWidget {
   const ShowInfo({super.key});
 
@@ -145,6 +151,76 @@ class _ShowInfoState extends State<ShowInfo> {
             InkWell(
               onTap: () => _launchURL(),
               child: const Text('https://github.com/DymNomZ', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w400, fontSize: 14),)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExitDialog extends StatefulWidget {
+  final Note? note;
+  final String title;
+  final String content;
+  final bool isEdit;
+  final Color barColor;
+  final Color bodyColor;
+  const ExitDialog({required this.note, required this.title, required this.content, 
+  required this.barColor, required this.bodyColor, required this.isEdit, super.key});
+
+  @override
+  State<ExitDialog> createState() => _ExitDialogState();
+}
+
+class _ExitDialogState extends State<ExitDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        height: 200.0,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(15.0)),
+            color: Colors.white,
+          ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Text(getExitText(), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(10.0, 10, 10, 0),
+              child: Text('You are closing the app\nDo you wish to save?', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 14),),
+            ),
+            ConfirmButton(onPressed: (){
+              if(widget.isEdit){
+                if(widget.note?.title != widget.title || widget.note?.content != widget.content ){
+                  setState(() {
+                    widget.note?.title = widget.title;
+                    widget.note?.content = widget.content;
+                    widget.note?.modifiedTime = DateTime.now();
+                    widget.note?.save();
+                  });
+                }
+                appWindow.close();
+              }else{
+                setState(() {
+                  final Note note = Note(
+                    title: widget.title,
+                    content: widget.content,
+                    modifiedTime: DateTime.now(),
+                    barColor: widget.barColor,
+                    bodyColor: widget.bodyColor,
+                    creationTime: DateTime.now(),
+                  );
+                  noteBox.add(note);
+                });
+              }
+              appWindow.close();
+            }),
+            CancelButton(onPressed: (){
+              appWindow.close();
+            })
           ],
         ),
       ),

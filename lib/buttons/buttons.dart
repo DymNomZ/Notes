@@ -103,12 +103,13 @@ class DeleteNoteButton extends StatelessWidget {
 }
 
 class ConfirmButton extends StatelessWidget {
-  const ConfirmButton({super.key});
+  final VoidCallback? onPressed;
+  const ConfirmButton({this.onPressed, super.key});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => Navigator.pop(context, true), 
+      onPressed: onPressed ?? () => Navigator.pop(context, true), 
       icon: const Icon(
         Icons.check,
         size: 25,
@@ -119,12 +120,13 @@ class ConfirmButton extends StatelessWidget {
 }
 
 class CancelButton extends StatelessWidget {
-  const CancelButton({super.key});
+  final VoidCallback? onPressed;
+  const CancelButton({this.onPressed, super.key});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => Navigator.pop(context, false), 
+      onPressed: onPressed ?? () => Navigator.pop(context, false), 
       icon: const Icon(
         Icons.close,
         size: 25,

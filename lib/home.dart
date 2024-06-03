@@ -1,5 +1,6 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/window.dart';
@@ -123,6 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: ListTile(
                       onTap: () {
                         setState(() => isEditing = true);
+                        print('1: $isEditing');
                         tempNoteDialog(currentNote);
                         },
                       title: RichText(
@@ -186,6 +188,89 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  exitFunc(Color barColor, Color bodyColor, [Note? note]) async {
+      final result = await showDialog(
+        context: context, 
+        builder: (context){
+          return Dialog(
+            child: Container(
+            height: 200.0,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                color: Colors.white,
+              ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Text(getExitText(), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(10.0, 10, 10, 0),
+                  child: Text('You are closing the app\nDo you wish to save?', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 16),),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                      child: ConfirmButton(onPressed: (){
+                        noteFunc(barColor, bodyColor, note);
+                        appWindow.close();
+                      }),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                      child: CancelButton(onPressed: (){
+                        appWindow.close();
+                      }),
+                    )
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      }
+    );
+  }
+
+  noteFunc(Color noteBarColor, Color noteBodyColor, [Note? note]){
+    if(_titleController.text.isNotEmpty || _contentController.text.isNotEmpty) {
+      if(isEditing) {
+        if(note?.title != _titleController.text || note?.content != _contentController.text) {
+          setState(() {
+            note?.title = _titleController.text;
+            note?.content = _contentController.text;
+            note?.modifiedTime = DateTime.now();
+            note?.save();
+            isEditing = false;
+            fillNoteList();
+          });
+        }
+        setState(() => isEditing = false);
+        fillNoteList();
+      }
+      else {
+        setState(() {
+          final Note note = Note(
+            title: _titleController.text,
+            content: _contentController.text,
+            modifiedTime: DateTime.now(),
+            barColor: noteBarColor,
+            bodyColor: noteBodyColor,
+            creationTime: DateTime.now(),
+          );
+          noteBox.add(note);
+          newTitle = '';
+          newContent = '';
+          setState(() => isEditing = false);
+          fillNoteList();
+        });
+      }
+    }
+  }
+
   tempNoteDialog([Note? note]){
     showDialog(
       context: context, 
@@ -211,39 +296,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               Row(
                                 children: [
                                   ReturnButton(onPressed: () {
-                                    if(_titleController.text.isNotEmpty || _contentController.text.isNotEmpty) {
-                                      if(isEditing) {
-                                        if(note?.title != _titleController.text || note?.content != _contentController.text) {
-                                          setState(() {
-                                            note?.title = _titleController.text;
-                                            note?.content = _contentController.text;
-                                            note?.modifiedTime = DateTime.now();
-                                            note?.save();
-                                            isEditing = false;
-                                            fillNoteList();
-                                          });
-                                        }
-                                        setState(() => isEditing = false);
-                                        fillNoteList();
-                                      }
-                                      else {
-                                        setState(() {
-                                          final Note note = Note(
-                                            title: _titleController.text,
-                                            content: _contentController.text,
-                                            modifiedTime: DateTime.now(),
-                                            barColor: noteBarColor,
-                                            bodyColor: noteBodyColor,
-                                            creationTime: DateTime.now(),
-                                          );
-                                          noteBox.add(note);
-                                          newTitle = '';
-                                          newContent = '';
-                                          setState(() => isEditing = false);
-                                          fillNoteList();
-                                        });
-                                      }
-                                    }
+                                      noteFunc(noteBarColor, noteBodyColor, note);
                                       setState(() => isEditing = false);
                                       fillNoteList();
                                       Navigator.pop(context);
@@ -323,7 +376,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 children: [
                                   MinimizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
                                   MaximizeWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor), onPressed: changeGridValues),
-                                  CloseWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor)),
+                                  CloseWindowButton(colors: minMaxCloseDarkModeNote(note, newNoteBarColor), 
+                                  onPressed: () => exitFunc(noteBarColor, noteBodyColor, note)),
                                 ],
                               ),
                             ],
