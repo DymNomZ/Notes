@@ -5,6 +5,11 @@ part 'note.g.dart';
 
 @HiveType(typeId: 0)
 class Note extends HiveObject{
+  Note get copy {
+    final objectInstance = Note(title: title, content: content, modifiedTime: modifiedTime, 
+    barColor: barColor, bodyColor: bodyColor, creationTime: creationTime);
+    return objectInstance;
+  }
 
   @HiveField(0)
   String title;

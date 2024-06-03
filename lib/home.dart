@@ -1,9 +1,9 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/window.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'buttons/buttons.dart';
 import 'functions/functions.dart';
 import 'classes/classes.dart';
@@ -105,7 +105,8 @@ class _MyHomePageState extends State<MyHomePage> {
           SearchField(onChanged: onSearchTextChanged),
           (noteBox.isNotEmpty)
           ? Expanded(
-            child: GridView.builder(
+            child: ReorderableGridView.builder(
+              //dragEnabled: true,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount (
                 crossAxisCount: axisCount,
                 childAspectRatio: aspectRatio
@@ -114,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
               itemBuilder: (context, index) {
                 Note currentNote = filteredNotes[index];
                 return Card(
+                  key: ValueKey(index),
                   margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   color: currentNote.barColor,
                   elevation: 3,
@@ -124,7 +126,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: ListTile(
                       onTap: () {
                         setState(() => isEditing = true);
-                        print('1: $isEditing');
                         tempNoteDialog(currentNote);
                         },
                       title: RichText(
@@ -171,7 +172,19 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                     }, note: currentNote,)
                 )));
-              }
+              },
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  final Note oldItem = filteredNotes[oldIndex];
+                  final Note newItem = filteredNotes[newIndex];
+
+                  final element = filteredNotes.removeAt(oldIndex);
+                  filteredNotes.insert(newIndex, element);
+                  
+                  noteBox.put(oldIndex, newItem.copy);
+                  noteBox.put(newIndex, oldItem.copy);
+                });
+              },
             )
           )
           : Padding(
