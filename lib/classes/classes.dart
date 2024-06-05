@@ -4,12 +4,15 @@ import 'package:notesclonedym/buttons/buttons.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/window.dart';
 import 'package:notesclonedym/functions/functions.dart';
+import 'package:notesclonedym/variables.dart';
 
 class WindowTitle extends StatefulWidget {
   final VoidCallback dialog;
   final VoidCallback bodydialog;
   final VoidCallback gridFunction;
-  const WindowTitle({required this.dialog, required this.bodydialog, required this.gridFunction, super.key});
+  final VoidCallback folderFunc;
+  const WindowTitle({required this.dialog, required this.bodydialog, required this.gridFunction, 
+  required this.folderFunc, super.key});
 
   @override
   State<WindowTitle> createState() => _WindowTitleState();
@@ -30,13 +33,7 @@ class _WindowTitleState extends State<WindowTitle> {
                 Row(
                   children: [
                     AddNoteButton(onPressed: widget.dialog),
-                    ShowInfoButton(onPressed: () async {
-                      final result = await showDialog(
-                        context: context,
-                        builder: (_) => const ShowInfo(),
-                      );
-                      return result;
-                    }),
+                    FolderButton(onPressed: widget.folderFunc),
                     ChoseColorButton(onPressed: () async {
                       final result = await showDialog(
                         context: context,
@@ -49,7 +46,79 @@ class _WindowTitleState extends State<WindowTitle> {
                         });
                       }
                     }, darkModeType: 1, color: DymNomZ),
-                    ChoseColorButton(onPressed: widget.bodydialog, darkModeType: 1, color: DymNomZ)
+                    ChoseColorButton(onPressed: widget.bodydialog, darkModeType: 1, color: DymNomZ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: MoveWindow(
+              child: Container(
+                //to be made a class
+                color: userWindow.barColor,
+              ),
+            ),
+          ),
+          Container(
+            //to be made a class
+            color: userWindow.barColor,
+            child: Row(
+              children: [
+                Row(
+                  children: [
+                    MinimizeWindowButton(colors: minMaxCloseDarkMode()),
+                    MaximizeWindowButton(colors: minMaxCloseDarkMode(), onPressed: widget.gridFunction,),
+                    CloseWindowButton(colors: minMaxCloseDarkMode()),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FolderPageBar extends StatefulWidget {
+  final VoidCallback bodydialog;
+  final VoidCallback gridFunction;
+  const FolderPageBar({required this.bodydialog, required this.gridFunction, super.key});
+
+  @override
+  State<FolderPageBar> createState() => _FolderPageBarState();
+}
+
+class _FolderPageBarState extends State<FolderPageBar> {
+  Window userWindow = windowBox.get(0);
+
+  @override
+  Widget build(BuildContext context) {
+    return WindowTitleBarBox(
+      child: Row(
+        children: [
+          Container(
+            color: userWindow.barColor,
+            child: Row(
+              children: [
+                Row(
+                  children: [
+                    const ReturnButton2(),
+                    AddNoteButton(onPressed: () async {
+                      final result = await showDialog(
+                        context: context,
+                        builder: (_) => const AddFolderDialog(),
+                      );
+                      return result;
+                    }),
+                    ShowInfoButton(onPressed: () async {
+                      final result = await showDialog(
+                        context: context,
+                        builder: (_) => const ShowInfo(),
+                      );
+                      return result;
+                    }),
                   ],
                 ),
               ],

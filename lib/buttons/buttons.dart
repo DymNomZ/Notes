@@ -157,3 +157,57 @@ class ReturnButton extends StatelessWidget {
     );
   }
 }
+
+class ReturnButton2 extends StatelessWidget {
+  final void Function()? onPressed;
+  const ReturnButton2({super.key, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: IconButton(
+        onPressed: onPressed ?? () => Navigator.pop(context, false),
+        icon: Icon(
+          Icons.arrow_back_ios,
+          size: 20,
+          color: windowBarDarkMode(),
+        )
+      ),
+    );
+  }
+}
+
+class FolderButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  const FolderButton({this.onPressed, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed, 
+      icon: const Icon(
+        Icons.folder_open,
+        size: 20,
+        color: Colors.black,
+      )
+    );
+  }
+}
+
+class MoveButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  const MoveButton({this.onPressed, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed ?? () => Navigator.pop(context, false), 
+      icon: const Icon(
+        Icons.drive_file_move_outline,
+        size: 25,
+        color: Colors.black,
+      )
+    );
+  }
+}

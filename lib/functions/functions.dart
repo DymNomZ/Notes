@@ -142,15 +142,69 @@ class _ShowInfoState extends State<ShowInfo> {
           children: [
             const Padding(
               padding: EdgeInsets.all(10.0),
-              child: Text('☘ App Info ☘', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
+              child: Text('☘ App Info ☘', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(10.0, 10, 10, 0),
-              child: Text('A simple windows notes application :D!\n\n Visit my Github profile:', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 14),),
+              child: Text('A simple windows notes application :D!\n\n Visit my Github profile:', textAlign: TextAlign.center, 
+              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),),
             ),
             InkWell(
               onTap: () => _launchURL(),
-              child: const Text('https://github.com/DymNomZ', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w400, fontSize: 14),)),
+              child: const Text('https://github.com/DymNomZ', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500, fontSize: 14),)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AddFolderDialog extends StatefulWidget {
+  const AddFolderDialog({super.key});
+
+  @override
+  State<AddFolderDialog> createState() => _AddFolderDialogState();
+}
+
+class _AddFolderDialogState extends State<AddFolderDialog> {
+  TextEditingController folderName = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        height: 150.0,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(15.0)),
+            color: Colors.white,
+          ),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Text('Add Folder', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: TextField(
+                controller: folderName,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                maxLines: 1,
+                decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'New Folder',
+                    hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ConfirmButton(onPressed: (){
+                  folderBox.add(folderName.text);
+                }),
+                const CancelButton(),
+              ],
+            )
           ],
         ),
       ),
@@ -186,11 +240,11 @@ class _ExitDialogState extends State<ExitDialog> {
           children: [
             Padding(
               padding: const EdgeInsets.all(10.0),
-              child: Text(getExitText(), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 20),),
+              child: Text(getExitText(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(10.0, 10, 10, 0),
-              child: Text('You are closing the app\nDo you wish to save?', style: TextStyle(fontWeight: FontWeight.w400, fontSize: 14),),
+              child: Text('You are closing the app\nDo you wish to save?', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),),
             ),
             ConfirmButton(onPressed: (){
               if(widget.isEdit){

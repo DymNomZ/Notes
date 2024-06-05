@@ -27,6 +27,7 @@ void main() async{
   Hive.registerAdapter(WindowAdapter());
   noteBox = await Hive.openBox<Note>('noteBox');
   windowBox = await Hive.openBox<Window>('windowBox');
+  folderBox = await Hive.openBox<String>('folderBox');
   
   runApp(const MyApp());
   doWhenWindowReady(() {

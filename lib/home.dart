@@ -1,8 +1,10 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/window.dart';
+import 'package:notesclonedym/variables.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'buttons/buttons.dart';
 import 'functions/functions.dart';
@@ -26,6 +28,12 @@ class _MyHomePageState extends State<MyHomePage> {
   String newContent = '';
   int axisCount = 1;
   double aspectRatio = 2.5;
+
+  checkFolder(){
+    folderStream.stream.listen((data) {
+      
+    });
+  }
 
   fillNoteList(){
     setState(() {
@@ -101,12 +109,21 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          WindowTitle(dialog: tempNoteDialog, bodydialog: choseBodyColor, gridFunction: changeGridValues),
-          SearchField(onChanged: onSearchTextChanged),
+          WindowTitle(dialog: tempNoteDialog, bodydialog: choseBodyColor, gridFunction: changeGridValues, folderFunc: folderList),
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 10, bottom: 5),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text('Notes', style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
+              ),
+              Expanded(child: SearchField(onChanged: onSearchTextChanged)),
+            ],
+          ),
           (noteBox.isNotEmpty)
           ? Expanded(
             child: ReorderableGridView.builder(
-              //dragEnabled: true,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount (
                 crossAxisCount: axisCount,
                 childAspectRatio: aspectRatio
@@ -191,7 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
              padding: const EdgeInsets.all(30.0),
              child: Center(
                child: Text('Create a note', 
-               style: TextStyle(fontWeight: FontWeight.w400, 
+               style: TextStyle(fontWeight: FontWeight.w500, 
                color: windowBodyDarkMode())
                ),
              ),
@@ -208,6 +225,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return Dialog(
             child: Container(
             height: 200.0,
+            width: 300.0,
               decoration: const BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(15.0)),
                 color: Colors.white,
@@ -282,6 +300,129 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
     }
+  }
+
+  folderList(){
+    showDialog(
+      context: context, 
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Scaffold(
+              backgroundColor: userWindow.bodyColor,
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  FolderPageBar(bodydialog: choseBodyColor, gridFunction: changeGridValues),
+                  Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, bottom: 5),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: Text('Folders', style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
+                      ),
+                      Expanded(child: SearchField(onChanged: onSearchTextChanged)),
+                    ],
+                  ),
+                  (folderBox.isNotEmpty)
+                  ? Expanded(
+                    child: ReorderableGridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount (
+                        crossAxisCount: axisCount,
+                        childAspectRatio: aspectRatio
+                      ),
+                      itemCount: filteredNotes.length,
+                      itemBuilder: (context, index) {
+                        String currentFolder = filteredNotes[index];
+                        return Card(
+                          key: ValueKey(index),
+                          margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                          color: windowBodyDarkMode() == Colors.black ? Colors.grey.shade500 : Colors.grey.shade200,
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: ListTile(
+                              onTap: () {
+                                print('lol');
+                                },
+                              title: RichText(
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                    text: '$currentFolder \n',
+                                    style: TextStyle(
+                                        color: windowBodyDarkMode(),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        height: 1.5),
+                                    children: [
+                                      TextSpan(
+                                        text: currentNote.content,
+                                        style: TextStyle(
+                                            color: windowBodyDarkMode(),
+                                            fontWeight: FontWeight.normal,
+                                            fontSize: 13,
+                                            height: 1.5),
+                                      )
+                                    ]),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      fontStyle: FontStyle.italic,
+                                      color: cardDarkMode(currentNote)),
+                                ),
+                              ),
+                              trailing: DeleteNoteButton(onPressed: () async {
+                              final result = await showDialog(
+                                context: context,
+                                builder: (_) => const ConfirmDelete(),
+                              );
+                              if (result != null && result) {
+                                setState(() {
+                                  filteredNotes.remove(currentNote);
+                                  currentNote.delete();
+                                });
+                              }
+                            }, note: currentNote,)
+                        )));
+                      },
+                      onReorder: (oldIndex, newIndex) {
+                        setState(() {
+                          final Note oldItem = filteredNotes[oldIndex];
+                          final Note newItem = filteredNotes[newIndex];
+
+                          final element = filteredNotes.removeAt(oldIndex);
+                          filteredNotes.insert(newIndex, element);
+                          
+                          noteBox.put(oldIndex, newItem.copy);
+                          noteBox.put(newIndex, oldItem.copy);
+                        });
+                      },
+                    )
+                  )
+                  : Padding(
+                    padding: const EdgeInsets.all(30.0),
+                    child: Center(
+                      child: Text('Create a folder', 
+                      style: TextStyle(fontWeight: FontWeight.w500, 
+                      color: windowBodyDarkMode())
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            );
+          }
+        );
+      }
+    );
   }
 
   tempNoteDialog([Note? note]){
