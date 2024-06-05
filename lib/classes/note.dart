@@ -29,7 +29,7 @@ class Note extends HiveObject{
   @HiveField(5)
   DateTime creationTime;
 
-  @HiveField(6)
+  @HiveField(6, defaultValue: 'Notes')
   String folder;
 
   Note({

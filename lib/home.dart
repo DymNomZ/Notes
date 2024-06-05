@@ -29,21 +29,13 @@ class _MyHomePageState extends State<MyHomePage> {
   int axisCount = 1;
   double aspectRatio = 2.5;
   List filteredFolders = [];
-  double folderAspectRatio = 4;
   TextEditingController _folderName = TextEditingController();
   String cf = 'Notes';
-
-  checkFolder(){
-    folderStream.stream.listen((data) {
-      setState(() {
-        cf = data;
-      });
-    });
-  }
+  bool isMoving = false;
 
   fillNoteList(){
     setState(() {
-      filteredNotes = noteBox.values.toList();
+      filteredNotes = noteBox.values.where((note) => note.folder == cf).toList();
     });
   }
 
@@ -66,9 +58,25 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  checkFolderBox(){
+    if(folderBox.isEmpty) {
+      setState(() {
+        folderBox.put(0, 'Notes');
+      });
+    }
+  }
+
   @override
   void initState(){
+    folderStream.stream.listen((data) {
+      setState(() {
+        cf = data;
+        print(data);
+        fillNoteList();
+      });
+    });
     super.initState();
+    checkFolderBox();
     fillNoteList();
     checkWindowBox();
     fillFolderList();
@@ -79,16 +87,8 @@ class _MyHomePageState extends State<MyHomePage> {
       filteredNotes = noteBox.values
       .where((note) =>
           note.content.toLowerCase().contains(searchText.toLowerCase()) ||
-          note.title.toLowerCase().contains(searchText.toLowerCase()))
-      .toList();
-    });
-  }
-
-  void onSearchTextChangedFolder(String searchText) {
-    setState(() {
-      filteredFolders = folderBox.values
-      .where((folder) =>
-          folder.contains(searchText.toLowerCase()))
+          note.title.toLowerCase().contains(searchText.toLowerCase()) &&
+          note.folder == cf)
       .toList();
     });
   }
@@ -113,14 +113,12 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         axisCount = 4;
         aspectRatio = 2.8;
-        folderAspectRatio = 2.8;
       });
     }
     else {
       setState(() {
         axisCount = 1;
         aspectRatio = 2.5;
-        folderAspectRatio = 4;
       });
     }
     appWindow.maximizeOrRestore();
@@ -140,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.only(left: 10, bottom: 5),
                 child: Align(
                   alignment: Alignment.topLeft,
-                  child: Text('Notes', style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
+                  child: Text(cf, style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
               ),
               Expanded(child: SearchField(onChanged: onSearchTextChanged)),
             ],
@@ -220,7 +218,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                     currentNote.delete();
                                   });
                                 }}, note: currentNote,),
-                                MoveButton(),
+                                MoveButton(onPressed: (){
+                                  setState(() {
+                                    isMoving = true;
+                                    folderList(currentNote);
+                                  });
+                                }),
                               ],
                             ),
                           )
@@ -234,7 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   final element = filteredNotes.removeAt(oldIndex);
                   filteredNotes.insert(newIndex, element);
-                  
+
                   noteBox.put(oldIndex, newItem.copy);
                   noteBox.put(newIndex, oldItem.copy);
                 });
@@ -340,7 +343,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  folderList(){
+  folderList([Note? note]){
     showDialog(
       context: context, 
       builder: (BuildContext context) {
@@ -360,57 +363,64 @@ class _MyHomePageState extends State<MyHomePage> {
                             children: [
                               Row(
                                 children: [
-                                  const ReturnButton2(),
+                                  ReturnButton2(onPressed: (){
+                                    if(isMoving){
+                                      setState(() => isMoving = false);
+                                    }
+                                    Navigator.pop(context);
+                                  }),
                                   AddNoteButton(onPressed: () async {
-                                    final result = await showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return Dialog(
-                                          child: Container(
-                                            height: 150.0,
-                                              decoration: const BoxDecoration(
-                                                borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                                                color: Colors.white,
-                                              ),
-                                            child: Column(
-                                              children: [
-                                                const Padding(
-                                                  padding: EdgeInsets.all(10.0),
-                                                  child: Text('Add Folder', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                                    if(isMoving == false){
+                                      final result = await showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return Dialog(
+                                            child: Container(
+                                              height: 150.0,
+                                                decoration: const BoxDecoration(
+                                                  borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                                                  color: Colors.white,
                                                 ),
-                                                Padding(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                                                  child: TextField(
-                                                    controller: _folderName,
-                                                    textAlign: TextAlign.center,
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                    maxLines: 1,
-                                                    decoration: const InputDecoration(
-                                                        border: InputBorder.none,
-                                                        hintText: 'New Folder',
-                                                        hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
+                                              child: Column(
+                                                children: [
+                                                  const Padding(
+                                                    padding: EdgeInsets.all(10.0),
+                                                    child: Text('Add Folder', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
                                                   ),
-                                                ),
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    ConfirmButton(onPressed: (){
-                                                      setState((){
-                                                        folderBox.put(_folderName.text, _folderName.text);
-                                                        fillFolderList();
-                                                      });
-                                                      Navigator.pop(context);
-                                                    }),
-                                                    const CancelButton(),
-                                                  ],
-                                                )
-                                              ],
+                                                  Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                                    child: TextField(
+                                                      controller: _folderName,
+                                                      textAlign: TextAlign.center,
+                                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                      maxLines: 1,
+                                                      decoration: const InputDecoration(
+                                                          border: InputBorder.none,
+                                                          hintText: 'New Folder',
+                                                          hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
+                                                    ),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      ConfirmButton(onPressed: (){
+                                                        setState((){
+                                                          folderBox.put(_folderName.text, _folderName.text);
+                                                          fillFolderList();
+                                                        });
+                                                        Navigator.pop(context);
+                                                      }),
+                                                      const CancelButton(),
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        );
+                                          );
                                       }
                                     );
                                     return result;
+                                    }
                                   }),
                                   ShowInfoButton(onPressed: () async {
                                     final result = await showDialog(
@@ -440,7 +450,9 @@ class _MyHomePageState extends State<MyHomePage> {
                               Row(
                                 children: [
                                   MinimizeWindowButton(colors: minMaxCloseDarkMode()),
-                                  MaximizeWindowButton(colors: minMaxCloseDarkMode(), onPressed: changeGridValues),
+                                  MaximizeWindowButton(colors: minMaxCloseDarkMode(), onPressed: (){
+                                    changeGridValues();
+                                  }),
                                   CloseWindowButton(colors: minMaxCloseDarkMode()),
                                 ],
                               ),
@@ -454,14 +466,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.all(10),
                     child: Align(
                       alignment: Alignment.topLeft,
-                      child: Text('Folders', style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
+                      child: Text((isMoving) ? 'Move to?' : 'Folders', 
+                      style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
                   ),
                   (folderBox.isNotEmpty)
                   ? Expanded(
                     child: GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount (
                         crossAxisCount: axisCount,
-                        childAspectRatio: folderAspectRatio
+                        childAspectRatio: 4
                       ),
                       itemCount: filteredFolders.length,
                       itemBuilder: (context, index) {
@@ -477,8 +490,21 @@ class _MyHomePageState extends State<MyHomePage> {
                             padding: const EdgeInsets.all(10),
                             child: ListTile(
                               onTap: () {
-                                print('lol');
-                                },
+                                if(isMoving){
+                                  setState((){
+                                    note?.folder = currFold;
+                                    note?.save();
+                                    fillNoteList();
+                                    isMoving = false;
+                                  });
+                                }else{
+                                  setState((){
+                                    folderStream.sink.add(currFold);
+                                    fillNoteList();
+                                  });
+                                }
+                                Navigator.pop(context);
+                              },
                               leading: Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Icon(
