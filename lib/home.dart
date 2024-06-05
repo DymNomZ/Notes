@@ -28,16 +28,28 @@ class _MyHomePageState extends State<MyHomePage> {
   String newContent = '';
   int axisCount = 1;
   double aspectRatio = 2.5;
+  List filteredFolders = [];
+  double folderAspectRatio = 4;
+  TextEditingController _folderName = TextEditingController();
+  String cf = 'Notes';
 
   checkFolder(){
     folderStream.stream.listen((data) {
-      
+      setState(() {
+        cf = data;
+      });
     });
   }
 
   fillNoteList(){
     setState(() {
       filteredNotes = noteBox.values.toList();
+    });
+  }
+
+  fillFolderList(){
+    setState(() {
+      filteredFolders = folderBox.values.toList();
     });
   }
 
@@ -59,6 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     fillNoteList();
     checkWindowBox();
+    fillFolderList();
   }
 
   void onSearchTextChanged(String searchText) {
@@ -67,6 +80,15 @@ class _MyHomePageState extends State<MyHomePage> {
       .where((note) =>
           note.content.toLowerCase().contains(searchText.toLowerCase()) ||
           note.title.toLowerCase().contains(searchText.toLowerCase()))
+      .toList();
+    });
+  }
+
+  void onSearchTextChangedFolder(String searchText) {
+    setState(() {
+      filteredFolders = folderBox.values
+      .where((folder) =>
+          folder.contains(searchText.toLowerCase()))
       .toList();
     });
   }
@@ -91,12 +113,14 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         axisCount = 4;
         aspectRatio = 2.8;
+        folderAspectRatio = 2.8;
       });
     }
     else {
       setState(() {
         axisCount = 1;
         aspectRatio = 2.5;
+        folderAspectRatio = 4;
       });
     }
     appWindow.maximizeOrRestore();
@@ -140,55 +164,68 @@ class _MyHomePageState extends State<MyHomePage> {
                       borderRadius: BorderRadius.circular(10)),
                   child: Padding(
                     padding: const EdgeInsets.all(10.0),
-                    child: ListTile(
-                      onTap: () {
-                        setState(() => isEditing = true);
-                        tempNoteDialog(currentNote);
-                        },
-                      title: RichText(
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                            text: '${currentNote.title} \n',
-                            style: TextStyle(
-                                color: cardDarkMode(currentNote),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                height: 1.5),
-                            children: [
-                              TextSpan(
-                                text: currentNote.content,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ListTile(
+                            onTap: () {
+                              setState(() => isEditing = true);
+                              tempNoteDialog(currentNote);
+                              },
+                            title: RichText(
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              text: TextSpan(
+                                  text: '${currentNote.title} \n',
+                                  style: TextStyle(
+                                      color: cardDarkMode(currentNote),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      height: 1.5),
+                                  children: [
+                                    TextSpan(
+                                      text: currentNote.content,
+                                      style: TextStyle(
+                                          color: cardDarkMode(currentNote),
+                                          fontWeight: FontWeight.normal,
+                                          fontSize: 13,
+                                          height: 1.5),
+                                    )
+                                  ]),
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
                                 style: TextStyle(
-                                    color: cardDarkMode(currentNote),
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 13,
-                                    height: 1.5),
-                              )
-                            ]),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontStyle: FontStyle.italic,
-                              color: cardDarkMode(currentNote)),
+                                    fontSize: 10,
+                                    fontStyle: FontStyle.italic,
+                                    color: cardDarkMode(currentNote)),
+                              ),
+                            ),
+                                          ),
                         ),
-                      ),
-                      trailing: DeleteNoteButton(onPressed: () async {
-                      final result = await showDialog(
-                        context: context,
-                        builder: (_) => const ConfirmDelete(),
-                      );
-                      if (result != null && result) {
-                        setState(() {
-                          filteredNotes.remove(currentNote);
-                          currentNote.delete();
-                        });
-                      }
-                    }, note: currentNote,)
-                )));
+                          Padding(
+                            padding: const EdgeInsets.only(top: 13.0),
+                            child: Column(
+                              children: [
+                                DeleteNoteButton(onPressed: () async {
+                                final result = await showDialog(
+                                  context: context,
+                                  builder: (_) => const ConfirmDelete(),
+                                );
+                                if (result != null && result) {
+                                  setState(() {
+                                    filteredNotes.remove(currentNote);
+                                    currentNote.delete();
+                                  });
+                                }}, note: currentNote,),
+                                MoveButton(),
+                              ],
+                            ),
+                          )
+                      ],
+                    )));
               },
               onReorder: (oldIndex, newIndex) {
                 setState(() {
@@ -291,6 +328,7 @@ class _MyHomePageState extends State<MyHomePage> {
             barColor: noteBarColor,
             bodyColor: noteBodyColor,
             creationTime: DateTime.now(),
+            folder: cf
           );
           noteBox.add(note);
           newTitle = '';
@@ -313,97 +351,166 @@ class _MyHomePageState extends State<MyHomePage> {
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  FolderPageBar(bodydialog: choseBodyColor, gridFunction: changeGridValues),
-                  Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, bottom: 5),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Text('Folders', style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
-                      ),
-                      Expanded(child: SearchField(onChanged: onSearchTextChanged)),
-                    ],
+                  WindowTitleBarBox(
+                    child: Row(
+                      children: [
+                        Container(
+                          color: userWindow.barColor,
+                          child: Row(
+                            children: [
+                              Row(
+                                children: [
+                                  const ReturnButton2(),
+                                  AddNoteButton(onPressed: () async {
+                                    final result = await showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return Dialog(
+                                          child: Container(
+                                            height: 150.0,
+                                              decoration: const BoxDecoration(
+                                                borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                                                color: Colors.white,
+                                              ),
+                                            child: Column(
+                                              children: [
+                                                const Padding(
+                                                  padding: EdgeInsets.all(10.0),
+                                                  child: Text('Add Folder', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+                                                ),
+                                                Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                                  child: TextField(
+                                                    controller: _folderName,
+                                                    textAlign: TextAlign.center,
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                    maxLines: 1,
+                                                    decoration: const InputDecoration(
+                                                        border: InputBorder.none,
+                                                        hintText: 'New Folder',
+                                                        hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),)
+                                                  ),
+                                                ),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    ConfirmButton(onPressed: (){
+                                                      setState((){
+                                                        folderBox.put(_folderName.text, _folderName.text);
+                                                        fillFolderList();
+                                                      });
+                                                      Navigator.pop(context);
+                                                    }),
+                                                    const CancelButton(),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    );
+                                    return result;
+                                  }),
+                                  ShowInfoButton(onPressed: () async {
+                                    final result = await showDialog(
+                                      context: context,
+                                      builder: (_) => const ShowInfo(),
+                                    );
+                                    return result;
+                                  }),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: MoveWindow(
+                            child: Container(
+                              //to be made a class
+                              color: userWindow.barColor,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          //to be made a class
+                          color: userWindow.barColor,
+                          child: Row(
+                            children: [
+                              Row(
+                                children: [
+                                  MinimizeWindowButton(colors: minMaxCloseDarkMode()),
+                                  MaximizeWindowButton(colors: minMaxCloseDarkMode(), onPressed: changeGridValues),
+                                  CloseWindowButton(colors: minMaxCloseDarkMode()),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text('Folders', style: TextStyle(color: windowBodyDarkMode(), fontWeight: FontWeight.bold, fontSize: 20))),
                   ),
                   (folderBox.isNotEmpty)
                   ? Expanded(
-                    child: ReorderableGridView.builder(
+                    child: GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount (
                         crossAxisCount: axisCount,
-                        childAspectRatio: aspectRatio
+                        childAspectRatio: folderAspectRatio
                       ),
-                      itemCount: filteredNotes.length,
+                      itemCount: filteredFolders.length,
                       itemBuilder: (context, index) {
-                        String currentFolder = filteredNotes[index];
+                        String currFold = filteredFolders[index];
                         return Card(
                           key: ValueKey(index),
                           margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                          color: windowBodyDarkMode() == Colors.black ? Colors.grey.shade500 : Colors.grey.shade200,
+                          color: windowBodyDarkMode() == Colors.black ? Colors.yellow.shade50 : Colors.grey.shade900,
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
                           child: Padding(
-                            padding: const EdgeInsets.all(10.0),
+                            padding: const EdgeInsets.all(10),
                             child: ListTile(
                               onTap: () {
                                 print('lol');
                                 },
+                              leading: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Icon(
+                                  Icons.folder_open_sharp,
+                                  size: 20,
+                                  color: windowBodyDarkMode(),
+                                ),
+                              ),
                               title: RichText(
-                                maxLines: 3,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 text: TextSpan(
-                                    text: '$currentFolder \n',
+                                    text: '$currFold \n',
                                     style: TextStyle(
                                         color: windowBodyDarkMode(),
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        height: 1.5),
-                                    children: [
-                                      TextSpan(
-                                        text: currentNote.content,
-                                        style: TextStyle(
-                                            color: windowBodyDarkMode(),
-                                            fontWeight: FontWeight.normal,
-                                            fontSize: 13,
-                                            height: 1.5),
-                                      )
-                                    ]),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text(
-                                  'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
-                                  style: TextStyle(
-                                      fontSize: 10,
-                                      fontStyle: FontStyle.italic,
-                                      color: cardDarkMode(currentNote)),
-                                ),
-                              ),
-                              trailing: DeleteNoteButton(onPressed: () async {
+                                        fontSize: 18,
+                                        height: 1.4),
+                              )),
+                              trailing: DeleteFolderButton(onPressed: () async {
                               final result = await showDialog(
                                 context: context,
                                 builder: (_) => const ConfirmDelete(),
                               );
                               if (result != null && result) {
                                 setState(() {
-                                  filteredNotes.remove(currentNote);
-                                  currentNote.delete();
+                                  filteredFolders.remove(currFold);
+                                  folderBox.delete(currFold);
+                                  fillFolderList();
                                 });
-                              }
-                            }, note: currentNote,)
+                              }})
                         )));
-                      },
-                      onReorder: (oldIndex, newIndex) {
-                        setState(() {
-                          final Note oldItem = filteredNotes[oldIndex];
-                          final Note newItem = filteredNotes[newIndex];
-
-                          final element = filteredNotes.removeAt(oldIndex);
-                          filteredNotes.insert(newIndex, element);
-                          
-                          noteBox.put(oldIndex, newItem.copy);
-                          noteBox.put(newIndex, oldItem.copy);
-                        });
                       },
                     )
                   )

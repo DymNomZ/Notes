@@ -102,6 +102,23 @@ class DeleteNoteButton extends StatelessWidget {
   }
 }
 
+class DeleteFolderButton extends StatelessWidget {
+  final void Function() onPressed;
+  const DeleteFolderButton({required this.onPressed, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed, 
+      icon: Icon(
+        Icons.delete,
+        size: 25,
+        color: windowBodyDarkMode()
+      )
+    );
+  }
+}
+
 class ConfirmButton extends StatelessWidget {
   final VoidCallback? onPressed;
   const ConfirmButton({this.onPressed, super.key});
@@ -203,10 +220,10 @@ class MoveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed ?? () => Navigator.pop(context, false), 
-      icon: const Icon(
+      icon: Icon(
         Icons.drive_file_move_outline,
         size: 25,
-        color: Colors.black,
+        color: windowBodyDarkMode(),
       )
     );
   }

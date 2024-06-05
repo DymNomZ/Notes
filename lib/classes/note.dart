@@ -7,7 +7,7 @@ part 'note.g.dart';
 class Note extends HiveObject{
   Note get copy {
     final objectInstance = Note(title: title, content: content, modifiedTime: modifiedTime, 
-    barColor: barColor, bodyColor: bodyColor, creationTime: creationTime);
+    barColor: barColor, bodyColor: bodyColor, creationTime: creationTime, folder: folder);
     return objectInstance;
   }
 
@@ -29,13 +29,17 @@ class Note extends HiveObject{
   @HiveField(5)
   DateTime creationTime;
 
+  @HiveField(6)
+  String folder;
+
   Note({
     required this.title,
     required this.content,
     required this.modifiedTime,
     required this.barColor,
     required this.bodyColor,
-    required this.creationTime
+    required this.creationTime,
+    required this.folder
   });
   
 }

@@ -160,7 +160,8 @@ class _ShowInfoState extends State<ShowInfo> {
 }
 
 class AddFolderDialog extends StatefulWidget {
-  const AddFolderDialog({super.key});
+  final void Function() function;
+  const AddFolderDialog({required this.function, super.key});
 
   @override
   State<AddFolderDialog> createState() => _AddFolderDialogState();
@@ -200,7 +201,10 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ConfirmButton(onPressed: (){
-                  folderBox.add(folderName.text);
+                    folderBox.put(folderName.text, folderName.text);
+                    widget.function();
+                    widget.function();
+                  Navigator.pop(context);
                 }),
                 const CancelButton(),
               ],
@@ -266,6 +270,7 @@ class _ExitDialogState extends State<ExitDialog> {
                     barColor: widget.barColor,
                     bodyColor: widget.bodyColor,
                     creationTime: DateTime.now(),
+                    folder: currentFolder
                   );
                   noteBox.add(note);
                 });
