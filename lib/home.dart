@@ -71,7 +71,6 @@ class _MyHomePageState extends State<MyHomePage> {
     folderStream.stream.listen((data) {
       setState(() {
         cf = data;
-        print(data);
         fillNoteList();
       });
     });
@@ -86,8 +85,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       filteredNotes = noteBox.values
       .where((note) =>
-          note.content.toLowerCase().contains(searchText.toLowerCase()) ||
-          note.title.toLowerCase().contains(searchText.toLowerCase()) &&
+          (note.content.toLowerCase().contains(searchText.toLowerCase()) ||
+          note.title.toLowerCase().contains(searchText.toLowerCase())) &&
           note.folder == cf)
       .toList();
     });
@@ -452,6 +451,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   MinimizeWindowButton(colors: minMaxCloseDarkMode()),
                                   MaximizeWindowButton(colors: minMaxCloseDarkMode(), onPressed: (){
                                     changeGridValues();
+                                    setState((){});
                                   }),
                                   CloseWindowButton(colors: minMaxCloseDarkMode()),
                                 ],
@@ -524,7 +524,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         fontSize: 18,
                                         height: 1.4),
                               )),
-                              trailing: DeleteFolderButton(onPressed: () async {
+                              trailing: (currFold == 'Notes') ? null: DeleteFolderButton(onPressed: () async {
                               final result = await showDialog(
                                 context: context,
                                 builder: (_) => const ConfirmDelete(),
@@ -533,7 +533,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 setState(() {
                                   filteredFolders.remove(currFold);
                                   folderBox.delete(currFold);
+                                  List temp = noteBox.values.toList();
+                                  for(int i = 0; i < temp.length; i++){
+                                    if(temp[i].folder == currFold){
+                                      Note tempNote = temp[i];
+                                      tempNote.delete();
+                                    }
+                                  }
                                   fillFolderList();
+                                  if(cf == currFold){
+                                    folderStream.sink.add('Notes');
+                                    Navigator.pop(context);
+                                  }
                                 });
                               }})
                         )));
