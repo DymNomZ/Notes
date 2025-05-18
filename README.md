@@ -17,7 +17,7 @@
 - Dark mode? Notes! automatically sets the font and icons to black or white depending on the brightness of your chosen color!
 
 ### 📂 Folders
-- Want to group notes together? No problem. Just click on the folder icon and create a folder, then move the notes to that folder. Easy!
+- Want to group notes? No problem. Just click on the folder icon and create a folder, then move the notes to that folder. Easy!
 
 ### 🔄 Reordering
 - Newly added notes always get added to the bottom, but don't worry, as Notes! allows you to reorder your notes!
@@ -29,8 +29,8 @@ When you decide to make Notes! app your daily driver, there's a few more options
 - **Ask Before Deleting:** This allows you to delete notes without having to confirm your decision, increasing your productivity.
 
 ### 🚀 Tech Stack and Developers
-The app is written in **Dart** using the **Flutter** framework with **Visual Studio Code** as the editor and compiled using **Inno Compiler**.
 <img src="https://skillicons.dev/icons?i=dart,flutter,vscode" />
+The app is written in **Dart** using the **Flutter** framework with **Visual Studio Code** as the editor and compiled using **Inno Compiler**.
 
 ### 💪 Developer
 Built by yours truly 😌🍀
