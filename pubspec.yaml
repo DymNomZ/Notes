@@ -47,6 +47,7 @@ dependencies:
   hive_flutter: ^1.1.0
   flutter_colorpicker: ^1.0.3
   reorderable_grid_view: ^2.2.8
+  window_manager: ^0.4.3
 
 dev_dependencies:
   flutter_test:

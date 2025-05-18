@@ -24,13 +24,14 @@ class NoteAdapter extends TypeAdapter<Note> {
       bodyColor: fields[4] as Color,
       creationTime: fields[5] as DateTime,
       folder: fields[6] == null ? 'Notes' : fields[6] as String,
+      orderIndex: fields[7] == null ? -1 : fields[7] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, Note obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class NoteAdapter extends TypeAdapter<Note> {
       ..writeByte(5)
       ..write(obj.creationTime)
       ..writeByte(6)
-      ..write(obj.folder);
+      ..write(obj.folder)
+      ..writeByte(7)
+      ..write(obj.orderIndex);
   }
 
   @override

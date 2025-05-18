@@ -5,9 +5,13 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/note.dart';
 import 'package:notesclonedym/classes/window.dart';
+import 'package:notesclonedym/variables.dart';
+import 'package:window_manager/window_manager.dart';
 import 'splash.dart';
-void main() async{
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
 
   String path = '';
   Map<String, String> envVars = Platform.environment;
@@ -28,17 +32,21 @@ void main() async{
   noteBox = await Hive.openBox<Note>('noteBox');
   windowBox = await Hive.openBox<Window>('windowBox');
   folderBox = await Hive.openBox<String>('folderBox');
-  
+  settingsBox = await Hive.openBox<bool>('settingsBox');
+
+  stayOnTop = settingsBox.get('stayOnTop', defaultValue: stayOnTop);
+  askBeforeDeleting =
+      settingsBox.get('askBeforeDeleting', defaultValue: askBeforeDeleting);
+
+  windowManager.setAlwaysOnTop(stayOnTop);
   runApp(const MyApp());
   doWhenWindowReady(() {
-  const initialSize = Size(350, 350);
-  appWindow.minSize = initialSize;
-  appWindow.size = initialSize;
-  appWindow.alignment = Alignment.center;
-  appWindow.show();
-});
-
-
+    const initialSize = Size(350, 350);
+    appWindow.minSize = initialSize;
+    appWindow.size = initialSize;
+    appWindow.alignment = Alignment.center;
+    appWindow.show();
+  });
 }
 
 class MyApp extends StatelessWidget {

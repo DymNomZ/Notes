@@ -2,6 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:notesclonedym/classes/note.dart';
 import 'package:notesclonedym/functions/functions.dart';
 
+class SettingsButton extends StatelessWidget {
+  final void Function() onPressed;
+  const SettingsButton({required this.onPressed, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed, 
+      icon: Icon(
+        Icons.settings,
+        size: 20,
+        color: windowBarDarkMode(),
+      )
+    );
+  }
+}
 class AddNoteButton extends StatelessWidget {
   final void Function() onPressed;
   const AddNoteButton({required this.onPressed, super.key});
@@ -203,10 +219,10 @@ class FolderButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed, 
-      icon: const Icon(
+      icon: Icon(
         Icons.folder_open,
         size: 20,
-        color: Colors.black,
+        color: windowBarDarkMode(),
       )
     );
   }
@@ -214,7 +230,8 @@ class FolderButton extends StatelessWidget {
 
 class MoveButton extends StatelessWidget {
   final VoidCallback? onPressed;
-  const MoveButton({this.onPressed, super.key});
+  final Note note;
+  const MoveButton({this.onPressed, required this.note, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +240,7 @@ class MoveButton extends StatelessWidget {
       icon: Icon(
         Icons.drive_file_move_outline,
         size: 25,
-        color: windowBodyDarkMode(),
+        color: cardDarkMode(note),
       )
     );
   }

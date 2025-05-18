@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Notes!"
-#define MyAppVersion "3.0.1"
+#define MyAppVersion "4.0.0"
 #define MyAppPublisher "DymNomZ@GitHub"
 #define MyAppURL "https://github.com/DymNomZ/NotesClone/"
 #define MyAppExeName "notesclonedym.exe"
@@ -10,7 +10,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{E5CC7885-3ADB-4E62-8C81-7B02226E33E5}
+AppId={{86C8FA32-ED7D-4129-B4E5-2B10D2617A06}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -18,10 +18,10 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={userdocs}\{#MyAppName}
+DefaultDirName={userdocs}\{#MyAppName}\{#MyAppName}
 DisableProgramGroupPage=yes
-; Remove the following line to run in administrative install mode (install for all users.)
-PrivilegesRequired=lowest
+; Uncomment the following line to run in non administrative install mode (install for current user only.)
+;PrivilegesRequired=lowest
 OutputDir=C:\Users\User\Desktop\NotesClone\installers
 OutputBaseFilename=Notes!-installer
 SetupIconFile=C:\Users\User\Desktop\NotesClone\windows\runner\resources\Notes!.ico
@@ -41,7 +41,9 @@ Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\bitsd
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.exp"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.lib"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\screen_retriever_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\window_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\window_size_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files

@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:notesclonedym/classes/note.dart';
-
-import 'classes/classes.dart';
 
 class EditNote extends StatefulWidget {
   const EditNote({super.key});
@@ -12,8 +9,8 @@ class EditNote extends StatefulWidget {
 
 class _EditNoteState extends State<EditNote> {
 
-  TextEditingController _titleController = TextEditingController();
-  TextEditingController _contentController = TextEditingController();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {

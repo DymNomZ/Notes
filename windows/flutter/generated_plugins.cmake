@@ -4,7 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   bitsdojo_window_windows
+  screen_retriever_windows
   url_launcher_windows
+  window_manager
   window_size
 )
 
