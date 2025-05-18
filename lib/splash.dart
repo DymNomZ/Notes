@@ -18,9 +18,7 @@ class _SplashState extends State<Splash> {
   _navigatetohome() async {
     await Future.delayed(const Duration(milliseconds: 1500), () {});
     Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => MyHomePage()));
+        context, MaterialPageRoute(builder: (context) => MyHomePage()));
   }
 
   @override
@@ -31,15 +29,14 @@ class _SplashState extends State<Splash> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.edit_square,
-              size: 150,
-              color: Colors.grey.shade500
-            ),
+            Image.asset("lib/images/notes.png"),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Notes!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
+              style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
             ),
           ],
         ),

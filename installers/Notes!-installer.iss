@@ -10,7 +10,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{86C8FA32-ED7D-4129-B4E5-2B10D2617A06}
+AppId={{D10BE35E-0691-489E-8B3B-BED4053C3ECC}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -18,13 +18,13 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={userdocs}\{#MyAppName}\{#MyAppName}
+DefaultDirName={userdocs}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\User\Desktop\NotesClone\installers
 OutputBaseFilename=Notes!-installer
-SetupIconFile=C:\Users\User\Desktop\NotesClone\windows\runner\resources\Notes!.ico
+SetupIconFile=C:\Users\User\Desktop\NotesClone\windows\runner\resources\notes.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
