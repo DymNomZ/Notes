@@ -8,6 +8,9 @@
 - Click on the latest release found on the right side of this repository.
 - Download the **Notes!-installer.exe** and run the setup, it is simple and shouldn't take long.
 
+## 🚮 Uninstall
+- You should find the **Notes!** folder inside your documents folder, inside it there's an uninstaller exe, run it.
+
 ## ✨Features!
 
 ### 🎨 Colors
