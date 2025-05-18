@@ -29,7 +29,8 @@ When you decide to make Notes! app your daily driver, there's a few more options
 - **Ask Before Deleting:** This allows you to delete notes without having to confirm your decision, increasing your productivity.
 
 ### 🚀 Tech Stack and Developers
-The app is written in **Dart** using the **Flutter** framework with **Visual Studio Code** as the editor and compiled using **Inno Compiler**.<br>
+The app is written in **Dart** using the **Flutter** framework with **Visual Studio Code** as the editor.<br>
+**Hive** is used as the local database and the app is compiled using **Inno Compiler**.<br><br>
 <img src="https://skillicons.dev/icons?i=dart,flutter,vscode" />
 
 ### 💪 Developer
