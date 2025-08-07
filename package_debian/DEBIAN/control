@@ -1,0 +1,7 @@
+Package: notesclonedym
+Version: 4.1.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: DymNomZ <DymNomZ@github.com>
+Description: A lightweight and stylish text-only app.  Notes! is a great alternative if you are looking for a straightforward approach.

@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: NotesCloneDym
+Source: <https://github.com/DymNomZ/Notes>
+
+Files: *
+Copyright: 2025, DymNomZ <yDymNomZ@github.com>
+License: All rights reserved

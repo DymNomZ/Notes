@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Notes
+Comment=Simple windows notes app! :D
+Exec=/usr/bin/notesclonedym
+Icon=notesclonedym
+Terminal=false
+Type=Application
+Categories=Utility;Office;
