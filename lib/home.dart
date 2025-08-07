@@ -21,6 +21,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Timer? _autosaveTimer;
+  Timer? _debounce;
 
   Note? noteToSave;
   Note? _originalNoteForComparison;
@@ -129,6 +130,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     // Stop listening to app lifecycle events
     WidgetsBinding.instance.removeObserver(this);
     _autosaveTimer?.cancel();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -155,6 +157,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         saveAllData();
       },
     );
+  }
+
+  void _onNoteChanged() {
+
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 800), () {
+      print('Debounce triggered!');
+      saveAllData();
+    });
   }
 
   Future<void> saveAllData() async {
@@ -802,6 +816,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _contentController.clear();
     }
 
+    _titleController.addListener(_onNoteChanged);
+    _contentController.addListener(_onNoteChanged);
+
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -826,6 +843,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 children: [
                                   ReturnButton(
                                     onPressed: () {
+                                      _titleController.removeListener(_onNoteChanged);
+                                      _contentController.removeListener(_onNoteChanged);
+                                    
+                                      _debounce?.cancel();
                                       noteFunc(
                                           noteBarColor, noteBodyColor, note);
                                       setState((){
