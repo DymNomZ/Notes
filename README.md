@@ -27,7 +27,7 @@ Uninstallation
 - Alternatively, you can find the unins000.exe uninstaller in the application's installation directory and run it.
 
 ## 🐧 Linux (Debian / Ubuntu-based)
-Note: These instructions are tested on Linux Mint and should be compatible with other Debian-based distributions like Ubuntu, Pop!_OS, and Zorin OS.
+*Note: These instructions are tested on Linux Mint and should be compatible with other Debian-based distributions like Ubuntu, Pop!_OS, and Zorin OS.*
 
 Installation
 --
@@ -45,7 +45,7 @@ There are two easy ways to uninstall the application:
 - Search for the package name: notesclonedym.
 - Select it from the list and click "Remove" or "Mark for Complete Removal".
 
-**Method 2 (Terminal):**
+## Method 2 (Terminal):
 - Open a new terminal window.
 - Run the following command:
 'sudo apt purge notesclonedym'
