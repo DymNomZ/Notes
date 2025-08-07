@@ -150,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void _startAutosaveTimer() {
     _autosaveTimer?.cancel();
     _autosaveTimer = Timer.periodic(
-      const Duration(minutes: 1),
+      const Duration(minutes: 5),
       (timer) {
         saveAllData();
       },
