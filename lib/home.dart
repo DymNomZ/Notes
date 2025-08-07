@@ -9,6 +9,7 @@ import 'buttons/buttons.dart';
 import 'functions/functions.dart';
 import 'classes/classes.dart';
 import 'classes/note.dart';
+import 'dart:async';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -17,7 +18,16 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+
+  Timer? _autosaveTimer;
+
+  Note? noteToSave;
+  Note? _originalNoteForComparison;
+
+  Color noteBarColor = Colors.yellow.shade50;
+  Color noteBodyColor = Colors.yellow.shade50;
+
   List filteredNotes = [];
   TextEditingController _titleController = TextEditingController();
   TextEditingController _contentController = TextEditingController();
@@ -109,6 +119,79 @@ class _MyHomePageState extends State<MyHomePage> {
     fillNoteList();
     checkWindowBox();
     fillFolderList();
+    // Start listening to app lifecycle events
+    WidgetsBinding.instance.addObserver(this);
+    _startAutosaveTimer();
+  }
+
+  @override
+  void dispose() {
+    // Stop listening to app lifecycle events
+    WidgetsBinding.instance.removeObserver(this);
+    _autosaveTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // This method is called whenever the app's state changes.
+    // We are interested when the app is paused or detached (closed).
+    print('App lifecycle state changed to: $state');
+    
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      // Save data when the app is about to be backgrounded or closed.
+      print('App is pausing or detaching, triggering final save...');
+      saveAllData();
+    }
+  }
+
+  void _startAutosaveTimer() {
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (timer) {
+        saveAllData();
+      },
+    );
+  }
+
+  Future<void> saveAllData() async {
+
+  if (!isEditing || noteToSave == null || _originalNoteForComparison == null) {
+      return;
+    }
+
+    print('Auto-saving data at ${DateTime.now()}...');
+
+    final String currentTitle = _titleController.text;
+    final String currentContent = _contentController.text;
+
+    final Color currentBarColor = noteToSave!.barColor;
+    final Color currentBodyColor = noteToSave!.bodyColor;
+
+    bool hasChanges = _originalNoteForComparison!.title != currentTitle ||
+                        _originalNoteForComparison!.content != currentContent ||
+                        _originalNoteForComparison!.barColor.value != currentBarColor.value ||
+                        _originalNoteForComparison!.bodyColor.value != currentBodyColor.value;
+
+    if (!hasChanges) {
+      print('Auto-save skipped: No changes detected.');
+      return;
+    }
+    
+    noteToSave!.title = currentTitle;
+    noteToSave!.content = currentContent;
+    noteToSave!.modifiedTime = DateTime.now();
+    
+    await noteToSave!.save(); 
+
+    _originalNoteForComparison = noteToSave!.copy;
+    
+    print('Save complete for note: "${noteToSave!.title}"');
+
+    fillNoteList();
   }
 
   void onSearchTextChanged(String searchText) {
@@ -198,6 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   itemCount: filteredNotes.length,
                   itemBuilder: (context, index) {
                     Note currentNote = filteredNotes[index];
+                    noteToSave = currentNote;
                     return Card(
                         key: ValueKey(currentNote),
                         margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
@@ -267,12 +351,14 @@ class _MyHomePageState extends State<MyHomePage> {
                                                 filteredNotes
                                                     .remove(currentNote);
                                                 currentNote.delete();
+                                                noteToSave = null;
                                               });
                                             }
                                           } else {
                                             setState(() {
                                               filteredNotes.remove(currentNote);
                                               currentNote.delete();
+                                              noteToSave = null;
                                             });
                                           }
                                         },
@@ -394,6 +480,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         setState(() => isEditing = false);
         fillNoteList();
+        noteToSave = note;
       } else {
         setState(() {
           final Note note = Note(
@@ -410,6 +497,7 @@ class _MyHomePageState extends State<MyHomePage> {
           newContent = '';
           setState(() => isEditing = false);
           fillNoteList();
+          noteToSave = note;
         });
       }
     }
@@ -700,11 +788,25 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   tempNoteDialog([Note? note]) {
+    noteToSave = note;
+
+    _originalNoteForComparison = note?.copy;
+
+    if (note != null) {
+      // We are editing an existing note
+      _titleController.text = note.title;
+      _contentController.text = note.content;
+    } else {
+      // We are creating a new note
+      _titleController.clear();
+      _contentController.clear();
+    }
+
     showDialog(
         context: context,
         builder: (BuildContext context) {
-          Color noteBarColor = Colors.yellow.shade50;
-          Color noteBodyColor = Colors.yellow.shade50;
+          noteBarColor = Colors.yellow.shade50;
+          noteBodyColor = Colors.yellow.shade50;
           Color newNoteBarColor = dymnomz;
           Color newNoteBodyColor = dymnomz;
           return StatefulBuilder(builder: (context, setState) {
@@ -726,7 +828,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                     onPressed: () {
                                       noteFunc(
                                           noteBarColor, noteBodyColor, note);
-                                      setState(() => isEditing = false);
+                                      setState((){
+                                        isEditing = false;
+                                        _originalNoteForComparison = null;
+                                    });
                                       fillNoteList();
                                       Navigator.pop(context);
                                     },
@@ -757,6 +862,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                               note?.content =
                                                   _contentController.text;
                                               note?.save();
+                                              noteToSave?.barColor = result;
                                             });
                                           } else {
                                             setState(() {
@@ -795,6 +901,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                               note?.content =
                                                   _contentController.text;
                                               note?.save();
+                                              noteToSave?.bodyColor = result;
                                             });
                                           } else {
                                             setState(() {
@@ -857,8 +964,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         TextField(
                           cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                          controller: _titleController = TextEditingController(
-                              text: note?.title ?? newTitle),
+                          controller: _titleController,
                           style: TextStyle(
                               color: noteBodyDarkMode(note, newNoteBodyColor),
                               fontSize: 20),
@@ -872,9 +978,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         TextField(
                           cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                          controller: _contentController =
-                              TextEditingController(
-                                  text: note?.content ?? newContent),
+                          controller: _contentController,
                           style: TextStyle(
                               color: noteBodyDarkMode(note, newNoteBodyColor),
                               fontSize: 15),
