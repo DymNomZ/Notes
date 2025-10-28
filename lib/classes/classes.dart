@@ -9,13 +9,11 @@ import 'package:notesclonedym/variables.dart';
 class WindowTitle extends StatefulWidget {
   final VoidCallback dialog;
   final VoidCallback bodydialog;
-  final VoidCallback gridFunction;
   final VoidCallback folderFunc;
   final VoidCallback settingsFunc;
   const WindowTitle(
       {required this.dialog,
       required this.bodydialog,
-      required this.gridFunction,
       required this.folderFunc,
       required this.settingsFunc,
       super.key});
@@ -85,7 +83,6 @@ class _WindowTitleState extends State<WindowTitle> {
                     MinimizeWindowButton(colors: minMaxCloseDarkMode()),
                     MaximizeWindowButton(
                       colors: minMaxCloseDarkMode(),
-                      onPressed: widget.gridFunction,
                     ),
                     CloseWindowButton(colors: minMaxCloseDarkMode()),
                   ],

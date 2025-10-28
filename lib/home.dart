@@ -36,8 +36,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Window userWindow = Window(barColor: Colors.amber, bodyColor: Colors.white);
   String newTitle = '';
   String newContent = '';
-  int axisCount = 1;
-  double aspectRatio = 2.5;
   List filteredFolders = [];
   final TextEditingController _folderName = TextEditingController();
   String cf = 'Notes';
@@ -49,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     bool needsMigration = notesForFolder.any((note) =>
         note.orderIndex == null ||
-        note.orderIndex == -1); // Assuming -1 is default from HiveField
+        note.orderIndex == -1);
 
     if (needsMigration) {
       notesForFolder.sort((a, b) => a.creationTime.compareTo(b.creationTime));
@@ -244,23 +242,27 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  void changeGridValues() {
-    if (axisCount == 1 && aspectRatio == 2.5) {
-      setState(() {
-        axisCount = 4;
-        aspectRatio = 2.8;
-      });
-    } else {
-      setState(() {
-        axisCount = 1;
-        aspectRatio = 2.5;
-      });
-    }
-    appWindow.maximizeOrRestore();
+  void onReorderFunc(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+
+      final Note item = filteredNotes.removeAt(oldIndex);
+      filteredNotes.insert(newIndex, item);
+      _updateNoteOrderInHive();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+
+    final double screenWidth = MediaQuery.of(context).size.width;
+    const double breakpoint = 700.0;
+    final bool isGridView = screenWidth > breakpoint;
+    final int currentAxisCount = isGridView ? screenWidth > 1100 ? screenWidth > 1600 ? 4 : 3 : 2 : 1;
+    final double currentAspectRatio = isGridView ? 2.8 : 2.5;
+
     return Scaffold(
       backgroundColor: userWindow.bodyColor,
       body: Column(
@@ -269,7 +271,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           WindowTitle(
               dialog: tempNoteDialog,
               bodydialog: choseBodyColor,
-              gridFunction: changeGridValues,
               folderFunc: folderList,
               settingsFunc: settingsDialog),
           Row(
@@ -289,119 +290,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
           (noteBox.isNotEmpty)
               ? Expanded(
-                  child: ReorderableGridView.builder(
+                child: !isGridView
+                  ? ReorderableListView.builder(
+                    itemCount: filteredNotes.length,
+                    buildDefaultDragHandles: false,
+                    onReorder: onReorderFunc,
+                    itemBuilder: (context, index) {
+                      Note currentNote = filteredNotes[index];
+                      return buildNoteCard(currentNote, index, false);
+                    },
+                  )
+                  : ReorderableGridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: axisCount, childAspectRatio: aspectRatio),
+                      crossAxisCount: currentAxisCount, childAspectRatio: currentAspectRatio),
                   itemCount: filteredNotes.length,
+                  onReorder: onReorderFunc,
                   itemBuilder: (context, index) {
                     Note currentNote = filteredNotes[index];
-                    noteToSave = currentNote;
-                    return Card(
-                        key: ValueKey(currentNote),
-                        margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                        color: currentNote.barColor,
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: ListTile(
-                                    onTap: () {
-                                      setState(() => isEditing = true);
-                                      tempNoteDialog(currentNote);
-                                    },
-                                    title: RichText(
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      text: TextSpan(
-                                          text: '${currentNote.title} \n',
-                                          style: TextStyle(
-                                              color: cardDarkMode(currentNote),
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              height: 1.5),
-                                          children: [
-                                            TextSpan(
-                                              text: currentNote.content,
-                                              style: TextStyle(
-                                                  color:
-                                                      cardDarkMode(currentNote),
-                                                  fontWeight: FontWeight.normal,
-                                                  fontSize: 13,
-                                                  height: 1.5),
-                                            )
-                                          ]),
-                                    ),
-                                    subtitle: Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Text(
-                                        'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            fontStyle: FontStyle.italic,
-                                            color: cardDarkMode(currentNote)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 13.0),
-                                  child: Column(
-                                    children: [
-                                      DeleteNoteButton(
-                                        onPressed: () async {
-                                          //if turned on in settings
-                                          if (askBeforeDeleting) {
-                                            final result = await showDialog(
-                                              context: context,
-                                              builder: (_) =>
-                                                  const ConfirmDelete(),
-                                            );
-                                            if (result != null && result) {
-                                              setState(() {
-                                                filteredNotes
-                                                    .remove(currentNote);
-                                                currentNote.delete();
-                                                noteToSave = null;
-                                              });
-                                            }
-                                          } else {
-                                            setState(() {
-                                              filteredNotes.remove(currentNote);
-                                              currentNote.delete();
-                                              noteToSave = null;
-                                            });
-                                          }
-                                        },
-                                        note: currentNote,
-                                      ),
-                                      MoveButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              isMoving = true;
-                                              folderList(currentNote);
-                                            });
-                                          },
-                                          note: currentNote),
-                                    ],
-                                  ),
-                                )
-                              ],
-                            )));
-                  },
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) {
-                        newIndex -= 1;
-                      }
-
-                      final Note item = filteredNotes.removeAt(oldIndex);
-                      filteredNotes.insert(newIndex, item);
-                      _updateNoteOrderInHive();
-                    });
+                    return buildNoteCard(currentNote, index, true);
                   },
                 ))
               : Padding(
@@ -417,6 +323,124 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       ),
     );
   }
+
+  Widget buildNoteCard(Note currentNote, int index, bool isGridView) {
+  return Card(
+      key: ValueKey(currentNote),
+      margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+      color: currentNote.barColor,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10.0),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  onTap: () {
+                    setState(() => isEditing = true);
+                    tempNoteDialog(currentNote);
+                  },
+                  title: RichText(
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                        text: '${currentNote.title} \n',
+                        style: TextStyle(
+                            color: cardDarkMode(currentNote),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            height: 1.5),
+                        children: [
+                          TextSpan(
+                            text: currentNote.content,
+                            style: TextStyle(
+                                color: cardDarkMode(currentNote),
+                                fontWeight: FontWeight.normal,
+                                fontSize: 13,
+                                height: 1.5),
+                          )
+                        ]),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                          color: cardDarkMode(currentNote)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  MoveButton(
+                    onPressed: () {
+                      setState(() {
+                        isMoving = true;
+                        folderList(currentNote);
+                      });
+                    },
+                    note: currentNote
+                  ),
+                  if (!isGridView) ...[
+                    const SizedBox(height: 8),
+                    ReorderableDragStartListener(
+                      index: index,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: Icon(
+                          Icons.back_hand,
+                          size: 20,
+                          color: cardDarkMode(currentNote)
+                        )
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  DeleteNoteButton(
+                    onPressed: () async {
+                      if (askBeforeDeleting) {
+                        final result = await showDialog(
+                          context: context,
+                          builder: (_) =>
+                              const ConfirmDelete(),
+                        );
+                        if (result != null && result) {
+                          setState(() {
+                            filteredNotes.remove(currentNote);
+                            currentNote.delete();
+                            noteToSave = null;
+                          });
+                        }
+                      } else {
+                        setState(() {
+                          filteredNotes.remove(currentNote);
+                          currentNote.delete();
+                          noteToSave = null;
+                        });
+                      }
+                    },
+                    note: currentNote,
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+}
 
   exitFunc(Color barColor, Color bodyColor, [Note? note]) async {
     final result = await showDialog(
@@ -497,7 +521,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         noteToSave = note;
       } else {
         setState(() {
-          final Note note = Note(
+            List<Note> notesInFolder = noteBox.values
+          .where((note) => note.folder == cf)
+          .toList()
+          .cast<Note>();
+
+          for (var existingNote in notesInFolder) {
+            existingNote.orderIndex++;
+            existingNote.save();
+          }
+
+          final Note newNote = Note(
               title: _titleController.text,
               content: _contentController.text,
               modifiedTime: DateTime.now(),
@@ -505,13 +539,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               bodyColor: noteBodyColor,
               creationTime: DateTime.now(),
               folder: cf,
-              orderIndex: nextOrderIndex);
-          noteBox.add(note);
+              orderIndex: 0
+          );
+
+          noteBox.add(newNote);
+          
           newTitle = '';
           newContent = '';
-          setState(() => isEditing = false);
+          isEditing = false;
           fillNoteList();
-          noteToSave = note;
+          noteToSave = newNote;
         });
       }
     }
@@ -664,7 +701,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                     MaximizeWindowButton(
                                         colors: minMaxCloseDarkMode(),
                                         onPressed: () {
-                                          changeGridValues();
                                           setState(() {});
                                         }),
                                     CloseWindowButton(
@@ -689,116 +725,135 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     ),
                     (folderBox.isNotEmpty)
                         ? Expanded(
-                            child: GridView.builder(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: axisCount,
-                                    childAspectRatio: 4),
-                            itemCount: filteredFolders.length,
-                            itemBuilder: (context, index) {
-                              String currFold = filteredFolders[index];
-                              return Card(
-                                  key: ValueKey(index),
-                                  margin:
-                                      const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                                  color: windowBodyDarkMode() == Colors.black
-                                      ? Colors.yellow.shade50
-                                      : Colors.grey.shade900,
-                                  elevation: 3,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                  child: Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: ListTile(
-                                          onTap: () {
-                                            if (isMoving) {
-                                              setState(() {
-                                                note?.folder = currFold;
-                                                note?.save();
-                                                fillNoteList();
-                                                isMoving = false;
-                                              });
-                                            } else {
-                                              setState(() {
-                                                folderStream.sink.add(currFold);
-                                                fillNoteList();
-                                              });
-                                            }
-                                            Navigator.pop(context);
-                                          },
-                                          leading: Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 8.0),
-                                            child: Icon(
-                                              Icons.folder_open_sharp,
-                                              size: 20,
-                                              color: windowBodyDarkMode(),
-                                            ),
-                                          ),
-                                          title: RichText(
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              text: TextSpan(
-                                                text: '$currFold \n',
-                                                style: TextStyle(
-                                                    color: windowBodyDarkMode(),
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                    height: 1.4),
-                                              )),
-                                          trailing: (currFold == 'Notes')
-                                              ? null
-                                              : DeleteFolderButton(
-                                                  onPressed: () async {
-                                                  final result =
-                                                      await showDialog(
-                                                    context: context,
-                                                    builder: (_) =>
-                                                        const ConfirmDelete(),
-                                                  );
-                                                  if (result != null &&
-                                                      result) {
-                                                    setState(() {
-                                                      filteredFolders
-                                                          .remove(currFold);
-                                                      folderBox
-                                                          .delete(currFold);
-                                                      List temp = noteBox.values
-                                                          .toList();
-                                                      for (int i = 0;
-                                                          i < temp.length;
-                                                          i++) {
-                                                        if (temp[i].folder ==
-                                                            currFold) {
-                                                          Note tempNote =
-                                                              temp[i];
-                                                          tempNote.delete();
-                                                        }
-                                                      }
-                                                      fillFolderList();
-                                                      if (cf == currFold) {
-                                                        folderStream.sink
-                                                            .add('Notes');
-                                                        Navigator.pop(context);
-                                                      }
-                                                    });
-                                                  }
-                                                }))));
-                            },
-                          ))
-                        : Padding(
-                            padding: const EdgeInsets.all(30.0),
-                            child: Center(
-                              child: Text('Create a folder',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: windowBodyDarkMode())),
-                            ),
-                          ),
+                          child: LayoutBuilder(
+                          builder: (context, constraints) {
+
+                            final double dialogWidth = constraints.maxWidth;
+                            const double breakpoint = 700.0;
+
+                            final bool isGridView = dialogWidth > breakpoint;
+                            final int currentAxisCount = isGridView ? dialogWidth > 1100 ? dialogWidth > 1600 ? 4 : 3 : 2 : 1;
+                            final double currentAspectRatio = isGridView ? 2.8 : 2.5;
+                            
+                            if (isGridView) {
+                              return GridView.builder(
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: currentAxisCount,
+                                  childAspectRatio: 4,
+                                ),
+                                itemCount: filteredFolders.length,
+                                itemBuilder: (context, index) {
+                                  String currFold = filteredFolders[index];
+                                  return buildFolderCard(currFold, note); 
+                                },
+                              );
+                            } else {
+                              return ListView.builder(
+                                itemCount: filteredFolders.length,
+                                itemBuilder: (context, index) {
+                                  String currFold = filteredFolders[index];
+                                  return buildFolderCard(currFold, note);
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      )
+                      : Padding(
+                      padding: const EdgeInsets.all(30.0),
+                      child: Center(
+                        child: Text('Create a folder',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: windowBodyDarkMode())),
+                      ),
+                    ),
                   ],
                 ));
           });
         });
+  }
+
+  Widget buildFolderCard(String currFold, Note? note) {
+    return Card(
+      key: ValueKey(currFold),
+      margin:
+          const EdgeInsets.fromLTRB(10, 0, 10, 10),
+      color: windowBodyDarkMode() == Colors.black
+          ? Colors.yellow.shade50
+          : Colors.grey.shade900,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: ListTile(
+              onTap: () {
+                if (isMoving) {
+                  setState(() {
+                    note?.folder = currFold;
+                    note?.save();
+                    fillNoteList();
+                    isMoving = false;
+                  });
+                } else {
+                  setState(() {
+                    folderStream.sink.add(currFold);
+                    fillNoteList();
+                  });
+                }
+                Navigator.pop(context);
+              },
+              leading: Padding(
+                padding:
+                    const EdgeInsets.only(top: 8.0),
+                child: Icon(
+                  Icons.folder_open_sharp,
+                  size: 20,
+                  color: windowBodyDarkMode(),
+                ),
+              ),
+              title: RichText(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  text: TextSpan(
+                    text: '$currFold \n',
+                    style: TextStyle(
+                        color: windowBodyDarkMode(),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        height: 1.4),
+                  )),
+              trailing: (currFold == 'Notes')
+              ? null
+              : DeleteFolderButton(
+                  onPressed: () async {
+                  final result =
+                      await showDialog(
+                    context: context,
+                    builder: (_) =>
+                        const ConfirmDelete(),
+                  );
+                  if (result != null &&
+                      result) {
+                    setState(() {
+                      filteredFolders.remove(currFold);
+                      folderBox.delete(currFold);
+                      List temp = noteBox.values.toList();
+                      for (int i = 0; i < temp.length; i++) {
+                        if (temp[i].folder == currFold) {
+                          Note tempNote = temp[i];
+                          tempNote.delete();
+                        }
+                      }
+                      fillFolderList();
+                      if (cf == currFold) {
+                        folderStream.sink.add('Notes');
+                        Navigator.pop(context);
+                      }
+                    });
+                  }
+    }))));
   }
 
   tempNoteDialog([Note? note]) {
@@ -963,8 +1018,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                           note, newNoteBarColor)),
                                   MaximizeWindowButton(
                                       colors: minMaxCloseDarkModeNote(
-                                          note, newNoteBarColor),
-                                      onPressed: changeGridValues),
+                                          note, newNoteBarColor)),
                                   CloseWindowButton(
                                       colors: minMaxCloseDarkModeNote(
                                           note, newNoteBarColor),
