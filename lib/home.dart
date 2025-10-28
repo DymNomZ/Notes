@@ -543,6 +543,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           );
 
           noteBox.add(newNote);
+
+          _titleController.clear();
+          _contentController.clear();
           
           newTitle = '';
           newContent = '';
@@ -654,6 +657,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                                                   _folderName
                                                                       .text);
                                                               fillFolderList();
+                                                              _folderName.clear();
                                                             });
                                                             Navigator.pop(
                                                                 context);
@@ -857,18 +861,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   tempNoteDialog([Note? note]) {
-    noteToSave = note;
 
+    setState(() {
+      isEditing = (note != null);
+    });
+
+    noteToSave = note;
     _originalNoteForComparison = note?.copy;
 
-    if (note != null) {
-      // We are editing an existing note
-      _titleController.text = note.title;
+    if (isEditing) {
+      _titleController.text = note!.title;
       _contentController.text = note.content;
     } else {
-      // We are creating a new note
       _titleController.clear();
       _contentController.clear();
+      noteBarColor = Colors.yellow.shade50;
+      noteBodyColor = Colors.yellow.shade50;
     }
 
     _titleController.addListener(_onNoteChanged);
