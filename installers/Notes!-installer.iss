@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Notes!"
-#define MyAppVersion "4.0.0"
+#define MyAppVersion "4.1.0"
 #define MyAppPublisher "DymNomZ@GitHub"
 #define MyAppURL "https://github.com/DymNomZ/NotesClone/"
 #define MyAppExeName "notesclonedym.exe"
@@ -22,9 +22,9 @@ DefaultDirName={userdocs}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=C:\Users\User\Desktop\NotesClone\installers
+OutputDir=C:\Users\User\Desktop\Notes\installers
 OutputBaseFilename=Notes!-installer
-SetupIconFile=C:\Users\User\Desktop\NotesClone\windows\runner\resources\notes.ico
+SetupIconFile=C:\Users\User\Desktop\Notes\windows\runner\resources\notes.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -36,16 +36,16 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\bitsdojo_window_windows_plugin.lib"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.exp"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\notesclonedym.lib"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\screen_retriever_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\window_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\window_size_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\User\Desktop\NotesClone\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\bitsdojo_window_windows_plugin.lib"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\notesclonedym.exp"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\notesclonedym.lib"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\screen_retriever_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\window_manager_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\window_size_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\User\Desktop\Notes\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

@@ -9,7 +9,47 @@
 - Download the **Notes!-installer.exe** and run the setup, it is simple and shouldn't take long.
 
 ## 🚮 Uninstall
-- You should find the **Notes!** folder inside your documents folder, inside it there's an uninstaller exe, run it.
+- You should find the **Notes!** folder inside your documents folder, inside you will find unins000.exe, run it.
+
+## 💾 Installation & Uninstallation 🚮
+Instructions are provided for both Windows and Linux (Debian-based distributions).
+
+## 🖥️ Windows
+Installation
+--
+- Click on the latest release found on the right side of this repository.
+- Download the **Notes!-installer.exe** and run the setup. It is simple and shouldn't take long.
+
+Uninstallation
+--
+- Open the "Apps -> Installed Apps" panel in Windows Settings or other similar options.
+- Find "Notes! version..." in the list, click the three dots, and select "Uninstall".
+- Alternatively, you can find the unins000.exe uninstaller in the application's installation directory and run it.
+
+## 🐧 Linux (Debian / Ubuntu-based)
+*Note: These instructions are tested on Linux Mint and should be compatible with other Debian-based distributions like Ubuntu, Pop!_OS, and Zorin OS.*
+
+Installation
+--
+- Navigate to the latest release on the right side of this repository.
+- Download the .deb file (e.g., notesclonedym_4.1.0_amd64.deb).
+- Double-click the downloaded .deb file to open it with the Gdebi Package Installer.
+- Click the "Install Package" button and enter your password when prompted.
+- Once installed, you can find the application in your Start Menu (usually under the "Office" or "Utilities" category).
+
+Uninstallation
+--
+There are two easy ways to uninstall the application:
+## Method 1 (Graphical):
+- Open the "Software Manager" or "Synaptic Package Manager".
+- Search for the package name: notesclonedym.
+- Select it from the list and click "Remove" or "Mark for Complete Removal".
+
+## Method 2 (Terminal):
+- Open a new terminal window.
+- Run the following command:
+'sudo apt purge notesclonedym'
+- Enter your password and confirm the uninstallation by pressing Y. This will cleanly remove the application and its configuration files.
 
 ## ✨Features!
 
