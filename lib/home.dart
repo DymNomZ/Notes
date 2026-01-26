@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:intl/intl.dart';
 import 'package:notesclonedym/classes/boxes.dart';
+import 'package:notesclonedym/classes/custom_image_options_menu.dart';
 import 'package:notesclonedym/classes/window.dart';
 import 'package:notesclonedym/variables.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
@@ -14,6 +17,11 @@ import 'classes/note.dart';
 import 'dart:async';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
+import 'package:path/path.dart' as p;
+import 'package:flutter_quill_extensions/src/common/utils/element_utils/element_utils.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -259,6 +267,45 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _onImageButtonPressed() async {
+  final ImagePicker picker = ImagePicker();
+  
+  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+  
+  if (image == null) return;
+
+  String imagesDirPath = "$basePath/Documents/StoredNotes!/Images";
+  
+  await Directory(imagesDirPath).create(recursive: true);
+
+  File originalFile = File(image.path);
+  String extension = p.extension(image.path).toLowerCase();
+  String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+  String newFileName = "img_$timestamp$extension";
+  String newPath = "$imagesDirPath/$newFileName";
+
+  int fileSize = await originalFile.length();
+  bool needsCompression = fileSize > 2 * 1024 * 1024; // 2MB
+
+  if (needsCompression && (extension == '.jpg' || extension == '.jpeg' || extension == '.png')) {
+    final cmd = img.Command()
+      ..decodeImage(originalFile.readAsBytesSync())
+      ..copyResize(width: 1920)
+      ..encodeJpg(quality: 85)
+      ..writeToFile(newPath);
+    
+    await cmd.executeThread();
+  } else {
+    await originalFile.copy(newPath);
+  }
+
+  final index = _quillController.selection.baseOffset;
+  final length = _quillController.selection.extentOffset - index;
+  
+  _quillController.replaceText(index, length, quill.BlockEmbed.image(newPath), null);
+  _quillController.moveCursorToPosition(index + 1);
+}
+
   @override
   Widget build(BuildContext context) {
 
@@ -281,7 +328,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           Row(
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 10, bottom: 5),
+                padding: const EdgeInsets.only(left: 10),
                 child: Align(
                     alignment: Alignment.topLeft,
                     child: Text(cf,
@@ -332,7 +379,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget buildNoteCard(Note currentNote, int index, bool isGridView) {
   return Card(
       key: ValueKey(currentNote),
-      margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+      margin: const EdgeInsets.fromLTRB(5, 5, 5, 5),
       color: currentNote.barColor,
       elevation: 3,
       shape: RoundedRectangleBorder(
@@ -583,12 +630,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               children: [
                                 Row(
                                   children: [
-                                    ReturnButton2(onPressed: () {
-                                      if (isMoving) {
-                                        setState(() => isMoving = false);
-                                      }
-                                      Navigator.pop(context);
-                                    }),
+                                    // ReturnButton2(onPressed: () {
+                                    //   if (isMoving) {
+                                    //     setState(() => isMoving = false);
+                                    //   }
+                                    //   Navigator.pop(context);
+                                    // }),
                                     AddNoteButton(onPressed: () async {
                                       if (isMoving == false) {
                                         final result = await showDialog(
@@ -890,7 +937,40 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 }
 
+Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) async {
+    String imagesDirPath = "$basePath/Documents/StoredNotes!/Images";
+    await Directory(imagesDirPath).create(recursive: true);
+
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    
+    int fileSize = imageBytes.lengthInBytes;
+    bool needsCompression = fileSize > 2 * 1024 * 1024; // 2MB
+
+    String newPath = "$imagesDirPath/img_$timestamp$extension";
+    
+    if (needsCompression) {
+      print("Image is large ($fileSize bytes). Compressing...");
+      // Decode image (CPU intensive)
+      img.Image? decodedImage = img.decodeImage(imageBytes);
+
+      if (decodedImage != null) {
+        if (decodedImage.width > 1920) {
+            decodedImage = img.copyResize(decodedImage, width: 1920);
+        }
+        
+        newPath = "$imagesDirPath/img_$timestamp.jpg";
+        File(newPath).writeAsBytesSync(img.encodeJpg(decodedImage, quality: 85));
+        return newPath;
+      }
+    }
+
+    File(newPath).writeAsBytesSync(imageBytes);
+    return newPath;
+  }
+
   tempNoteDialog([Note? note]) {
+
+    final ValueNotifier<bool> isProcessingImageNotifier = ValueNotifier(false);
 
     setState(() {
       isEditing = (note != null);
@@ -899,6 +979,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     noteToSave = note;
     _originalNoteForComparison = note?.copy;
 
+    final QuillClipboardConfig clipboardConfig = quill.QuillClipboardConfig(
+      enableExternalRichPaste: true,
+      onImagePaste: (imageBytes) async {
+        isProcessingImageNotifier.value = true; // Turn spinner ON
+        
+        String? path = await _processAndSaveImage(imageBytes, ".png");
+        
+        isProcessingImageNotifier.value = false; // Turn spinner OFF
+        return path;
+      },
+    );
+
     if (isEditing) {
       _titleController.text = note!.title;
       try {
@@ -906,6 +998,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         _quillController = quill.QuillController(
             document: doc,
             selection: const TextSelection.collapsed(offset: 0),
+            config: quill.QuillControllerConfig(clipboardConfig: clipboardConfig),
         );
       } on FormatException {
         print('FormatException caught! Migrating old note content...');
@@ -913,6 +1006,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         _quillController = quill.QuillController(
           document: doc,
           selection: const TextSelection.collapsed(offset: 0),
+          config: quill.QuillControllerConfig(clipboardConfig: clipboardConfig),
         );
         
         // Immediately save this converted format back to the note
@@ -921,7 +1015,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       }
     } else {
       _titleController.clear();
-      _quillController = quill.QuillController.basic();
+      _quillController = quill.QuillController.basic(
+        config: quill.QuillControllerConfig(clipboardConfig: clipboardConfig),
+      );
       noteBarColor = Colors.yellow.shade50;
       noteBodyColor = Colors.yellow.shade50;
     }
@@ -934,176 +1030,192 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (BuildContext context) {
           noteBarColor = Colors.yellow.shade50;
           noteBodyColor = Colors.yellow.shade50;
           Color newNoteBarColor = dymnomz;
           Color newNoteBodyColor = dymnomz;
           return StatefulBuilder(builder: (context, setState) {
-            return Scaffold(
-              backgroundColor: (isEditing) ? note?.bodyColor : noteBodyColor,
-              body: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  WindowTitleBarBox(
-                    child: Row(
-                      children: [
-                        Container(
-                          color: (isEditing) ? note?.barColor : noteBarColor,
-                          child: Row(
-                            children: [
-                              Row(
+
+            if(isEditing == false && _quillController.document.isEmpty()){
+              _titleController.clear();
+              _quillController = quill.QuillController.basic(
+                config: quill.QuillControllerConfig(clipboardConfig: clipboardConfig),
+              );
+            }
+
+            return Stack(
+              children: [
+                  Scaffold(
+                  backgroundColor: (isEditing) ? note?.bodyColor : noteBodyColor,
+                  body: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      WindowTitleBarBox(
+                        child: Row(
+                          children: [
+                            Container(
+                              color: (isEditing) ? note?.barColor : noteBarColor,
+                              child: Row(
                                 children: [
-                                  ReturnButton(
-                                    onPressed: () {
-                                      _titleController.removeListener(_onNoteChanged);
-                                      _quillSubscription?.cancel();
-                                    
-                                      _debounce?.cancel();
-                                      noteFunc(
-                                          noteBarColor, noteBodyColor, note);
-                                      setState((){
-                                        isEditing = false;
-                                        _originalNoteForComparison = null;
-                                    });
-                                      fillNoteList();
-                                      Navigator.pop(context);
-                                    },
-                                    note: note,
-                                    color: newNoteBarColor,
-                                  ),
-                                  ChoseColorButton(
-                                      onPressed: () async {
-                                        final result = await showDialog(
-                                            context: context,
-                                            builder: (_) => (isEditing)
-                                                ? ChoseColor(
-                                                    colorPart: ColorSelectionType.bar.index,
-                                                    currentColor:
-                                                        note!.barColor)
-                                                : ChoseColor(
-                                                    colorPart: ColorSelectionType.bar.index,
-                                                    currentColor: noteBarColor,
-                                                  ));
-                                        setState(() => newNoteBarColor =
-                                            result ?? noteBarColor);
-                                        if (result != null) {
-                                          final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
-                                          if (isEditing) {
-                                            setState(() {
-                                              note?.barColor = result;
-                                              note?.title =
-                                                  _titleController.text;
-                                              note?.richContentJson = contentJson;
-                                              note?.save();
-                                              noteToSave?.barColor = result;
-                                            });
-                                          } else {
-                                            setState(() {
-                                              noteBarColor = result;
-                                              newTitle = _titleController.text;
-                                              newContent = contentJson;
-                                            });
-                                          }
-                                        }
-                                      },
-                                      darkModeType: 2,
-                                      note: note,
-                                      color: newNoteBarColor),
-                                  ChoseColorButton(
-                                      onPressed: () async {
-                                        final result = await showDialog(
-                                            context: context,
-                                            builder: (_) => (isEditing)
-                                                ? ChoseColor(
-                                                    colorPart: ColorSelectionType.body.index,
-                                                    currentColor:
-                                                        note!.bodyColor)
-                                                : ChoseColor(
-                                                    colorPart: ColorSelectionType.body.index,
-                                                    currentColor: noteBodyColor,
-                                                  ));
-                                        setState(() => newNoteBodyColor =
-                                            result ?? noteBodyColor);
-                                        if (result != null) {
-                                          final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
-                                          if (isEditing) {
-                                            setState(() {
-                                              note?.bodyColor = result;
-                                              note?.title =
-                                                  _titleController.text;
-                                              note?.richContentJson = contentJson;
-                                              note?.save();
-                                              noteToSave?.bodyColor = result;
-                                            });
-                                          } else {
-                                            setState(() {
-                                              noteBodyColor = result;
-                                              newTitle = _titleController.text;
-                                              newContent = contentJson;
-                                            });
-                                          }
-                                        }
-                                      },
-                                      darkModeType: 2,
-                                      note: note,
-                                      color: newNoteBarColor),
-                                  quill.QuillToolbarColorButton(
-                                    controller: _quillController, 
-                                    isBackground: false,
-                                    options: quill.QuillToolbarColorButtonOptions(
-                                      iconData: Icons.format_color_text_rounded,
-                                      customOnPressedCallback: (controller, isBackground) {
-                                        return _onTextColorButtonPressed(controller);
-                                      },
-                                    ),
+                                  Row(
+                                    children: [
+                                      ReturnButton(
+                                        onPressed: () {
+                                          _titleController.removeListener(_onNoteChanged);
+                                          _quillSubscription?.cancel();
+                                        
+                                          _debounce?.cancel();
+                                          noteFunc(
+                                              noteBarColor, noteBodyColor, note);
+                                          setState((){
+                                            isEditing = false;
+                                            _originalNoteForComparison = null;
+                                        });
+                                          fillNoteList();
+                                          Navigator.pop(context);
+                                        },
+                                        note: note,
+                                        color: newNoteBarColor,
+                                      ),
+                                      ChoseColorButton(
+                                          onPressed: () async {
+                                            final result = await showDialog(
+                                                context: context,
+                                                builder: (_) => (isEditing)
+                                                    ? ChoseColor(
+                                                        colorPart: ColorSelectionType.bar.index,
+                                                        currentColor:
+                                                            note!.barColor)
+                                                    : ChoseColor(
+                                                        colorPart: ColorSelectionType.bar.index,
+                                                        currentColor: noteBarColor,
+                                                      ));
+                                            setState(() => newNoteBarColor =
+                                                result ?? noteBarColor);
+                                            if (result != null) {
+                                              final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+                                              if (isEditing) {
+                                                setState(() {
+                                                  note?.barColor = result;
+                                                  note?.title =
+                                                      _titleController.text;
+                                                  note?.richContentJson = contentJson;
+                                                  note?.save();
+                                                  noteToSave?.barColor = result;
+                                                });
+                                              } else {
+                                                setState(() {
+                                                  noteBarColor = result;
+                                                  newTitle = _titleController.text;
+                                                  newContent = contentJson;
+                                                });
+                                              }
+                                            }
+                                          },
+                                          darkModeType: 2,
+                                          note: note,
+                                          color: newNoteBarColor),
+                                      ChoseColorButton(
+                                          onPressed: () async {
+                                            final result = await showDialog(
+                                                context: context,
+                                                builder: (_) => (isEditing)
+                                                    ? ChoseColor(
+                                                        colorPart: ColorSelectionType.body.index,
+                                                        currentColor:
+                                                            note!.bodyColor)
+                                                    : ChoseColor(
+                                                        colorPart: ColorSelectionType.body.index,
+                                                        currentColor: noteBodyColor,
+                                                      ));
+                                            setState(() => newNoteBodyColor =
+                                                result ?? noteBodyColor);
+                                            if (result != null) {
+                                              final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+                                              if (isEditing) {
+                                                setState(() {
+                                                  note?.bodyColor = result;
+                                                  note?.title =
+                                                      _titleController.text;
+                                                  note?.richContentJson = contentJson;
+                                                  note?.save();
+                                                  noteToSave?.bodyColor = result;
+                                                });
+                                              } else {
+                                                setState(() {
+                                                  noteBodyColor = result;
+                                                  newTitle = _titleController.text;
+                                                  newContent = contentJson;
+                                                });
+                                              }
+                                            }
+                                          },
+                                          darkModeType: 2,
+                                          note: note,
+                                          color: newNoteBarColor),
+                                      quill.QuillToolbarColorButton(
+                                        controller: _quillController, 
+                                        isBackground: false,
+                                        options: quill.QuillToolbarColorButtonOptions(
+                                          iconData: Icons.format_color_text_rounded,
+                                          customOnPressedCallback: (controller, isBackground) {
+                                            return _onTextColorButtonPressed(controller);
+                                          },
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: _onImageButtonPressed,
+                                        icon: Icon(
+                                          Icons.image, 
+                                          size: 20, 
+                                          color: noteBarDarkMode(note, newNoteBarColor), 
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: MoveWindow(
-                            child: Container(
-                              //to be made a class
-                              color:
-                                  (isEditing) ? note?.barColor : noteBarColor,
                             ),
-                          ),
-                        ),
-                        Container(
-                          //to be made a class
-                          color: (isEditing) ? note?.barColor : noteBarColor,
-                          child: Row(
-                            children: [
-                              Row(
+                            Expanded(
+                              child: MoveWindow(
+                                child: Container(
+                                  //to be made a class
+                                  color:
+                                      (isEditing) ? note?.barColor : noteBarColor,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              //to be made a class
+                              color: (isEditing) ? note?.barColor : noteBarColor,
+                              child: Row(
                                 children: [
-                                  MinimizeWindowButton(
-                                      colors: minMaxCloseDarkModeNote(
-                                          note, newNoteBarColor)),
-                                  MaximizeWindowButton(
-                                      colors: minMaxCloseDarkModeNote(
-                                          note, newNoteBarColor)),
-                                  CloseWindowButton(
-                                      colors: minMaxCloseDarkModeNote(
-                                          note, newNoteBarColor),
-                                      onPressed: () => exitFunc(
-                                          noteBarColor, noteBodyColor, note)),
+                                  Row(
+                                    children: [
+                                      MinimizeWindowButton(
+                                          colors: minMaxCloseDarkModeNote(
+                                              note, newNoteBarColor)),
+                                      MaximizeWindowButton(
+                                          colors: minMaxCloseDarkModeNote(
+                                              note, newNoteBarColor)),
+                                      CloseWindowButton(
+                                          colors: minMaxCloseDarkModeNote(
+                                              note, newNoteBarColor),
+                                          onPressed: () => exitFunc(
+                                              noteBarColor, noteBodyColor, note)),
+                                    ],
+                                  ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                      child: Padding(
-                    padding: const EdgeInsets.only(left: 10),
-                    child: ListView(
-                      children: [
-                        TextField(
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: TextField(
                           cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
                           controller: _titleController,
                           style: TextStyle(
@@ -1117,43 +1229,68 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                       noteBodyDarkMode(note, newNoteBodyColor),
                                   fontSize: 20)),
                         ),
-                        // TextField(
-                        //   cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                        //   controller: _contentController,
-                        //   style: TextStyle(
-                        //       color: noteBodyDarkMode(note, newNoteBodyColor),
-                        //       fontSize: 15),
-                        //   maxLines: null,
-                        //   decoration: InputDecoration(
-                        //       border: InputBorder.none,
-                        //       hintText: 'Type something here',
-                        //       hintStyle: TextStyle(
-                        //           color:
-                        //               noteBodyDarkMode(note, newNoteBodyColor),
-                        //           fontSize: 15)),
-                        // ),
-                       Expanded(
-                          child: quill.QuillEditor(
-                            controller: _quillController,
-                            focusNode: FocusNode(),
-                            scrollController: ScrollController(),
-                            config: quill.QuillEditorConfig(
-                              enableInteractiveSelection: true, 
-                              showCursor: true,
-                              scrollBottomInset: 0,
-                              autoFocus: true,
-                              textSelectionThemeData: TextSelectionThemeData(
-                                selectionColor: selectionColor,
-                                cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                              ),
+                      ),
+                      Expanded(
+                        child: quill.QuillEditor(
+                          controller: _quillController,
+                          focusNode: FocusNode(),
+                          scrollController: ScrollController(),
+                          config: quill.QuillEditorConfig(
+                            padding: const EdgeInsetsGeometry.symmetric(horizontal: 15),
+                            enableInteractiveSelection: true, 
+                            showCursor: true,
+                            scrollBottomInset: 0,
+                            autoFocus: true,
+                            textSelectionThemeData: TextSelectionThemeData(
+                              selectionColor: selectionColor,
+                              cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
                             ),
+                            embedBuilders: [
+                              ...FlutterQuillEmbeds.editorBuilders(
+                                imageEmbedConfig: QuillEditorImageEmbedConfig(
+                                  onImageClicked: (imagePath) {
+        
+                                    // 1. Create the ImageProvider (assuming it's a local file)
+                                    // We use FileImage because all your images are saved locally now
+                                    final imageProvider = FileImage(File(imagePath));
+
+                                    // 2. Create ElementSize
+                                    // We pass nulls so the Resizer defaults to the screen width (safe behavior)
+                                    const imageSize = ElementSize(null, null);
+
+                                    // 3. Show YOUR Custom Menu
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => CustomImageOptionsMenu(
+                                        controller: _quillController,
+                                        config: const QuillEditorImageEmbedConfig(),
+                                        imageSource: imagePath,
+                                        imageSize: imageSize,
+                                        readOnly: false, // We are editing
+                                        imageProvider: imageProvider,
+                                      ),
+                                    );
+                                  },
+                                )
+                              ),
+                            ],
                           ),
-                        )
-                      ],
-                    ),
-                  ))
-                ],
-              ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: isProcessingImageNotifier,
+                  builder: (context, isProcessing, child) {
+                    if (!isProcessing) return const SizedBox.shrink();
+                    return Container(
+                      color: Colors.black54,
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                ),
+              ]
             );
           });
         });

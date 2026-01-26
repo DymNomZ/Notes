@@ -5,6 +5,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/note.dart';
 import 'package:notesclonedym/classes/window.dart';
+import 'package:notesclonedym/functions/functions.dart';
 import 'package:notesclonedym/variables.dart';
 import 'package:window_manager/window_manager.dart';
 import 'splash.dart';
@@ -15,19 +16,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
-  String path = '';
   Map<String, String> envVars = Platform.environment;
   if (Platform.isMacOS) {
-    path = envVars['HOME']!;
+    basePath = envVars['HOME']!;
   } else if (Platform.isLinux) {
-    path = envVars['HOME']!;
+    basePath = envVars['HOME']!;
   } else if (Platform.isWindows) {
-    path = envVars['UserProfile']!;
+    basePath = envVars['UserProfile']!;
   }
-  path = path.replaceAll('\\', '/');
-  path = "$path/Documents/StoredNotes!";
+  basePath = basePath.replaceAll('\\', '/');
+  String savePath = "$basePath/Documents/StoredNotes!";
 
-  await Hive.initFlutter(path);
+  await Hive.initFlutter(savePath);
   Hive.registerAdapter(NoteAdapter());
   Hive.registerAdapter(ColorAdapter());
   Hive.registerAdapter(WindowAdapter());
@@ -41,6 +41,8 @@ void main() async {
       settingsBox.get('askBeforeDeleting', defaultValue: askBeforeDeleting);
 
   windowManager.setAlwaysOnTop(stayOnTop);
+  cleanupOrphanedImages();
+
   runApp(const MyApp());
   doWhenWindowReady(() {
     const initialSize = Size(350, 350);

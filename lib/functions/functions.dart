@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:notesclonedym/buttons/buttons.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/note.dart';
@@ -11,6 +12,7 @@ import 'package:notesclonedym/variables.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:convert';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:path/path.dart' as p;
 
 _launchURL() async {
   final Uri url = Uri.parse('https://github.com/DymNomZ');
@@ -26,6 +28,43 @@ String quillJsonToPlainText(String jsonString) {
     return doc.toPlainText().trim();
   } catch (e) {
     return jsonString;
+  }
+}
+
+Future<void> cleanupOrphanedImages() async {
+  final Set<String> validImagePaths = {};
+  
+  for (var note in noteBox.values) {
+    try {
+      final List<dynamic> ops = jsonDecode(note.richContentJson);
+      for (var op in ops) {
+        if (op['insert'] is Map && op['insert'].containsKey('image')) {
+          String path = op['insert']['image'];
+          validImagePaths.add(p.normalize(path));
+        }
+      }
+    } catch (e) {}
+  }
+
+  String imagesDirPath = "$basePath/Documents/StoredNotes!/Images";
+  final imgDir = Directory(imagesDirPath);
+
+  if (!await imgDir.exists()) return;
+
+  //  Delete orphans
+  await for (var entity in imgDir.list()) {
+    if (entity is File) {
+      String normalizedPath = p.normalize(entity.path);
+      if (!validImagePaths.contains(normalizedPath)) {
+        print("Deleting orphaned image: $normalizedPath");
+        try {
+          await entity.delete();
+        } catch (e) {
+          print("Could not delete $normalizedPath: $e");
+        }
+      }
+    }
+    print("Image Cleanup Complete.");
   }
 }
 

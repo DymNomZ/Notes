@@ -49,6 +49,9 @@ dependencies:
   window_manager: ^0.4.3
   flutter_quill: ^11.5.0
   flutter_quill_extensions: ^11.0.0
+  image_picker: ^1.2.1
+  image: ^4.7.2
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

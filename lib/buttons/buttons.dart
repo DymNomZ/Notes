@@ -111,7 +111,7 @@ class DeleteNoteButton extends StatelessWidget {
       onPressed: onPressed, 
       icon: Icon(
         Icons.delete,
-        size: 25,
+        size: 20,
         color: cardDarkMode(note)
       )
     );

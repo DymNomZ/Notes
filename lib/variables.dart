@@ -16,6 +16,8 @@ bool askBeforeDeleting = true;
 Color dymnomz = const Color(0xFF0BFF00); // Easter Egg :p
 Color selectionColor = const Color.fromARGB(140, 228, 250, 255);
 
+String basePath = '';
+
 enum ColorSelectionType {
   font, bar, body
 }

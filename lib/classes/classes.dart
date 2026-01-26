@@ -36,8 +36,8 @@ class _WindowTitleState extends State<WindowTitle> {
               children: [
                 Row(
                   children: [
-                    AddNoteButton(onPressed: widget.dialog),
                     FolderButton(onPressed: widget.folderFunc),
+                    AddNoteButton(onPressed: widget.dialog),
                     ChoseColorButton(
                         onPressed: () async {
                           final result = await showDialog(
