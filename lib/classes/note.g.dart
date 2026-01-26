@@ -18,7 +18,7 @@ class NoteAdapter extends TypeAdapter<Note> {
     };
     return Note(
       title: fields[0] as String,
-      content: fields[1] as String,
+      richContentJson: fields[1] as String,
       modifiedTime: fields[2] as DateTime,
       barColor: fields[3] as Color,
       bodyColor: fields[4] as Color,
@@ -35,7 +35,7 @@ class NoteAdapter extends TypeAdapter<Note> {
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
-      ..write(obj.content)
+      ..write(obj.richContentJson)
       ..writeByte(2)
       ..write(obj.modifiedTime)
       ..writeByte(3)

@@ -1,6 +1,7 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:notesclonedym/buttons/buttons.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/note.dart';
@@ -8,11 +9,23 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'package:notesclonedym/variables.dart';
 import 'package:window_manager/window_manager.dart';
+import 'dart:convert';
+import 'package:flutter_quill/flutter_quill.dart';
 
 _launchURL() async {
   final Uri url = Uri.parse('https://github.com/DymNomZ');
   if (!await launchUrl(url)) {
     throw Exception('Could not launch $url');
+  }
+}
+
+String quillJsonToPlainText(String jsonString) {
+  try {
+    final List<dynamic> jsonData = jsonDecode(jsonString);
+    final doc = Document.fromJson(jsonData);
+    return doc.toPlainText().trim();
+  } catch (e) {
+    return jsonString;
   }
 }
 
@@ -320,17 +333,31 @@ class _SettingsOptionsState extends State<SettingsOptions> {
   }
 }
 
-class ChoseWindowColor extends StatefulWidget {
+// Converts a Color to a Hex string for Quill (e.g., "#FF0000")
+String colorToHex(Color color) {
+  return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+}
+
+// Converts a Hex string from Quill back to a Color
+Color hexToColor(String? hexString) {
+  if (hexString == null) return Colors.black; // Default to black if no color set
+  final buffer = StringBuffer();
+  if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+  buffer.write(hexString.replaceFirst('#', ''));
+  return Color(int.parse(buffer.toString(), radix: 16));
+}
+
+class ChoseColor extends StatefulWidget {
   final int colorPart;
   final Color currentColor;
-  const ChoseWindowColor(
+  const ChoseColor(
       {required this.colorPart, required this.currentColor, super.key});
 
   @override
-  State<ChoseWindowColor> createState() => _ChoseWindowColorState();
+  State<ChoseColor> createState() => _ChoseColorState();
 }
 
-class _ChoseWindowColorState extends State<ChoseWindowColor> {
+class _ChoseColorState extends State<ChoseColor> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -348,7 +375,9 @@ class _ChoseWindowColorState extends State<ChoseWindowColor> {
               child: Text(
                 (widget.colorPart == 1)
                     ? 'Select Bar Color'
-                    : 'Select Body Color',
+                    : (widget.colorPart == 2)
+                    ? 'Select Body Color'
+                    : 'Select Font Color',
                 style:
                     const TextStyle(fontWeight: FontWeight.w500, fontSize: 20),
               ),

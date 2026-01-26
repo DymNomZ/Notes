@@ -42,7 +42,7 @@ class _WindowTitleState extends State<WindowTitle> {
                         onPressed: () async {
                           final result = await showDialog(
                             context: context,
-                            builder: (_) => ChoseWindowColor(
+                            builder: (_) => ChoseColor(
                                 colorPart: 1,
                                 currentColor: userWindow.barColor),
                           );

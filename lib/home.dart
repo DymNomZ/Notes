@@ -1,5 +1,7 @@
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:intl/intl.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/window.dart';
@@ -10,6 +12,8 @@ import 'functions/functions.dart';
 import 'classes/classes.dart';
 import 'classes/note.dart';
 import 'dart:async';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'dart:convert';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -22,6 +26,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Timer? _autosaveTimer;
   Timer? _debounce;
+  StreamSubscription? _quillSubscription;
 
   Note? noteToSave;
   Note? _originalNoteForComparison;
@@ -31,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   List filteredNotes = [];
   TextEditingController _titleController = TextEditingController();
-  TextEditingController _contentController = TextEditingController();
+  quill.QuillController _quillController = quill.QuillController.basic();
   bool isEditing = false;
   Window userWindow = Window(barColor: Colors.amber, bodyColor: Colors.white);
   String newTitle = '';
@@ -127,6 +132,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void dispose() {
     // Stop listening to app lifecycle events
     WidgetsBinding.instance.removeObserver(this);
+    _quillSubscription?.cancel();
     _autosaveTimer?.cancel();
     _debounce?.cancel();
     super.dispose();
@@ -137,7 +143,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     
     // This method is called whenever the app's state changes.
-    // We are interested when the app is paused or detached (closed).
     print('App lifecycle state changed to: $state');
     
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
@@ -178,13 +183,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     print('Auto-saving data at ${DateTime.now()}...');
 
     final String currentTitle = _titleController.text;
-    final String currentContent = _contentController.text;
+    final String currentContent = jsonEncode(_quillController.document.toDelta().toJson());
 
     final Color currentBarColor = noteToSave!.barColor;
     final Color currentBodyColor = noteToSave!.bodyColor;
 
     bool hasChanges = _originalNoteForComparison!.title != currentTitle ||
-                        _originalNoteForComparison!.content != currentContent ||
+                        _originalNoteForComparison!.richContentJson != currentContent ||
                         _originalNoteForComparison!.barColor.value != currentBarColor.value ||
                         _originalNoteForComparison!.bodyColor.value != currentBodyColor.value;
 
@@ -194,7 +199,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
     
     noteToSave!.title = currentTitle;
-    noteToSave!.content = currentContent;
+    noteToSave!.richContentJson = currentContent;
     noteToSave!.modifiedTime = DateTime.now();
     
     await noteToSave!.save(); 
@@ -231,7 +236,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     final result = await showDialog(
       context: context,
       builder: (_) =>
-          ChoseWindowColor(colorPart: 2, currentColor: userWindow.bodyColor),
+          ChoseColor(colorPart: ColorSelectionType.body.index, currentColor: userWindow.bodyColor),
     );
     if (result != null) {
       setState(() {
@@ -357,7 +362,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                             height: 1.5),
                         children: [
                           TextSpan(
-                            text: currentNote.content,
+                            text: quillJsonToPlainText(currentNote.richContentJson),
                             style: TextStyle(
                                 color: cardDarkMode(currentNote),
                                 fontWeight: FontWeight.normal,
@@ -502,14 +507,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         noteBox.values.where((note) => note.folder == cf).toList();
     int nextOrderIndex = notesInFolder.length;
 
+    final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+
     if (_titleController.text.isNotEmpty ||
-        _contentController.text.isNotEmpty) {
+        contentJson.isNotEmpty) {
       if (isEditing) {
         if (note?.title != _titleController.text ||
-            note?.content != _contentController.text) {
+            note?.richContentJson != contentJson) {
           setState(() {
             note?.title = _titleController.text;
-            note?.content = _contentController.text;
+            note?.richContentJson = contentJson;
             note?.modifiedTime = DateTime.now();
             note?.save();
             isEditing = false;
@@ -533,7 +540,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
           final Note newNote = Note(
               title: _titleController.text,
-              content: _contentController.text,
+              richContentJson: contentJson,
               modifiedTime: DateTime.now(),
               barColor: noteBarColor,
               bodyColor: noteBodyColor,
@@ -545,7 +552,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           noteBox.add(newNote);
 
           _titleController.clear();
-          _contentController.clear();
+          _quillController.clear();
           
           newTitle = '';
           newContent = '';
@@ -860,6 +867,29 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }))));
   }
 
+  Future<void> _onTextColorButtonPressed(quill.QuillController controller) async {
+  final attributes = controller.getSelectionStyle().attributes;
+  final colorAttribute = attributes[quill.Attribute.color.key];
+  
+  Color currentColor = Colors.black;
+  if (colorAttribute != null) {
+    currentColor = hexToColor(colorAttribute.value);
+  }
+
+  final Color? result = await showDialog(
+    context: context,
+    builder: (_) => ChoseColor(
+      colorPart: ColorSelectionType.font.index,
+      currentColor: currentColor,
+    ),
+  );
+
+  if (result != null) {
+    final String hex = colorToHex(result);
+    controller.formatSelection(quill.ColorAttribute(hex));
+  }
+}
+
   tempNoteDialog([Note? note]) {
 
     setState(() {
@@ -871,16 +901,36 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     if (isEditing) {
       _titleController.text = note!.title;
-      _contentController.text = note.content;
+      try {
+        final doc = quill.Document.fromJson(jsonDecode(note!.richContentJson));
+        _quillController = quill.QuillController(
+            document: doc,
+            selection: const TextSelection.collapsed(offset: 0),
+        );
+      } on FormatException {
+        print('FormatException caught! Migrating old note content...');
+        final doc = quill.Document()..insert(0, note.richContentJson);
+        _quillController = quill.QuillController(
+          document: doc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        
+        // Immediately save this converted format back to the note
+        note.richContentJson = jsonEncode(doc.toDelta().toJson());
+        note.save(); 
+      }
     } else {
       _titleController.clear();
-      _contentController.clear();
+      _quillController = quill.QuillController.basic();
       noteBarColor = Colors.yellow.shade50;
       noteBodyColor = Colors.yellow.shade50;
     }
 
     _titleController.addListener(_onNoteChanged);
-    _contentController.addListener(_onNoteChanged);
+    _quillSubscription?.cancel(); 
+    _quillSubscription = _quillController.document.changes.listen((_) {
+      _onNoteChanged();
+    });
 
     showDialog(
         context: context,
@@ -907,7 +957,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                   ReturnButton(
                                     onPressed: () {
                                       _titleController.removeListener(_onNoteChanged);
-                                      _contentController.removeListener(_onNoteChanged);
+                                      _quillSubscription?.cancel();
                                     
                                       _debounce?.cancel();
                                       noteFunc(
@@ -927,24 +977,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                         final result = await showDialog(
                                             context: context,
                                             builder: (_) => (isEditing)
-                                                ? ChoseWindowColor(
-                                                    colorPart: 1,
+                                                ? ChoseColor(
+                                                    colorPart: ColorSelectionType.bar.index,
                                                     currentColor:
                                                         note!.barColor)
-                                                : ChoseWindowColor(
-                                                    colorPart: 1,
+                                                : ChoseColor(
+                                                    colorPart: ColorSelectionType.bar.index,
                                                     currentColor: noteBarColor,
                                                   ));
                                         setState(() => newNoteBarColor =
                                             result ?? noteBarColor);
                                         if (result != null) {
+                                          final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
                                           if (isEditing) {
                                             setState(() {
                                               note?.barColor = result;
                                               note?.title =
                                                   _titleController.text;
-                                              note?.content =
-                                                  _contentController.text;
+                                              note?.richContentJson = contentJson;
                                               note?.save();
                                               noteToSave?.barColor = result;
                                             });
@@ -952,8 +1002,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                             setState(() {
                                               noteBarColor = result;
                                               newTitle = _titleController.text;
-                                              newContent =
-                                                  _contentController.text;
+                                              newContent = contentJson;
                                             });
                                           }
                                         }
@@ -966,24 +1015,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                         final result = await showDialog(
                                             context: context,
                                             builder: (_) => (isEditing)
-                                                ? ChoseWindowColor(
-                                                    colorPart: 2,
+                                                ? ChoseColor(
+                                                    colorPart: ColorSelectionType.body.index,
                                                     currentColor:
                                                         note!.bodyColor)
-                                                : ChoseWindowColor(
-                                                    colorPart: 2,
+                                                : ChoseColor(
+                                                    colorPart: ColorSelectionType.body.index,
                                                     currentColor: noteBodyColor,
                                                   ));
                                         setState(() => newNoteBodyColor =
                                             result ?? noteBodyColor);
                                         if (result != null) {
+                                          final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
                                           if (isEditing) {
                                             setState(() {
                                               note?.bodyColor = result;
                                               note?.title =
                                                   _titleController.text;
-                                              note?.content =
-                                                  _contentController.text;
+                                              note?.richContentJson = contentJson;
                                               note?.save();
                                               noteToSave?.bodyColor = result;
                                             });
@@ -991,15 +1040,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                             setState(() {
                                               noteBodyColor = result;
                                               newTitle = _titleController.text;
-                                              newContent =
-                                                  _contentController.text;
+                                              newContent = contentJson;
                                             });
                                           }
                                         }
                                       },
                                       darkModeType: 2,
                                       note: note,
-                                      color: newNoteBarColor)
+                                      color: newNoteBarColor),
+                                  quill.QuillToolbarColorButton(
+                                    controller: _quillController, 
+                                    isBackground: false,
+                                    options: quill.QuillToolbarColorButtonOptions(
+                                      iconData: Icons.format_color_text_rounded,
+                                      customOnPressedCallback: (controller, isBackground) {
+                                        return _onTextColorButtonPressed(controller);
+                                      },
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -1059,21 +1117,38 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                       noteBodyDarkMode(note, newNoteBodyColor),
                                   fontSize: 20)),
                         ),
-                        TextField(
-                          cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                          controller: _contentController,
-                          style: TextStyle(
-                              color: noteBodyDarkMode(note, newNoteBodyColor),
-                              fontSize: 15),
-                          maxLines: null,
-                          decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Type something here',
-                              hintStyle: TextStyle(
-                                  color:
-                                      noteBodyDarkMode(note, newNoteBodyColor),
-                                  fontSize: 15)),
-                        ),
+                        // TextField(
+                        //   cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
+                        //   controller: _contentController,
+                        //   style: TextStyle(
+                        //       color: noteBodyDarkMode(note, newNoteBodyColor),
+                        //       fontSize: 15),
+                        //   maxLines: null,
+                        //   decoration: InputDecoration(
+                        //       border: InputBorder.none,
+                        //       hintText: 'Type something here',
+                        //       hintStyle: TextStyle(
+                        //           color:
+                        //               noteBodyDarkMode(note, newNoteBodyColor),
+                        //           fontSize: 15)),
+                        // ),
+                       Expanded(
+                          child: quill.QuillEditor(
+                            controller: _quillController,
+                            focusNode: FocusNode(),
+                            scrollController: ScrollController(),
+                            config: quill.QuillEditorConfig(
+                              enableInteractiveSelection: true, 
+                              showCursor: true,
+                              scrollBottomInset: 0,
+                              autoFocus: true,
+                              textSelectionThemeData: TextSelectionThemeData(
+                                selectionColor: selectionColor,
+                                cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
+                              ),
+                            ),
+                          ),
+                        )
                       ],
                     ),
                   ))

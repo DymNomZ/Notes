@@ -10,7 +10,7 @@ class Note extends HiveObject{
   String title;
 
   @HiveField(1)
-  String content;
+  String richContentJson;
 
   @HiveField(2)
   DateTime modifiedTime;
@@ -32,7 +32,7 @@ class Note extends HiveObject{
 
   Note({
     required this.title,
-    required this.content,
+    required this.richContentJson,
     required this.modifiedTime,
     required this.barColor,
     required this.bodyColor,
@@ -44,7 +44,7 @@ class Note extends HiveObject{
   Note get copy {
     final objectInstance = Note(
         title: title,
-        content: content,
+        richContentJson: richContentJson,
         modifiedTime: modifiedTime,
         barColor: barColor,
         bodyColor: bodyColor,
