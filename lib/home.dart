@@ -2,11 +2,13 @@ import 'dart:typed_data';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:intl/intl.dart';
 import 'package:notesclonedym/classes/boxes.dart';
 import 'package:notesclonedym/classes/custom_image_options_menu.dart';
+import 'package:notesclonedym/classes/hover_image_builder.dart';
 import 'package:notesclonedym/classes/window.dart';
 import 'package:notesclonedym/variables.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
@@ -34,7 +36,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Timer? _autosaveTimer;
   Timer? _debounce;
-  StreamSubscription? _quillSubscription;
 
   Note? noteToSave;
   Note? _originalNoteForComparison;
@@ -43,8 +44,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Color noteBodyColor = Colors.yellow.shade50;
 
   List filteredNotes = [];
-  TextEditingController _titleController = TextEditingController();
+  quill.QuillController _titleController = quill.QuillController.basic();
+  StreamSubscription? _titleSubscription;
   quill.QuillController _quillController = quill.QuillController.basic();
+  StreamSubscription? _quillSubscription;
+
   bool isEditing = false;
   Window userWindow = Window(barColor: Colors.amber, bodyColor: Colors.white);
   String newTitle = '';
@@ -140,6 +144,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void dispose() {
     // Stop listening to app lifecycle events
     WidgetsBinding.instance.removeObserver(this);
+    _titleSubscription?.cancel();
     _quillSubscription?.cancel();
     _autosaveTimer?.cancel();
     _debounce?.cancel();
@@ -190,14 +195,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
     print('Auto-saving data at ${DateTime.now()}...');
 
-    final String currentTitle = _titleController.text;
-    final String currentContent = jsonEncode(_quillController.document.toDelta().toJson());
+    final String titleJson = jsonEncode(_titleController.document.toDelta().toJson());
+    final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
 
     final Color currentBarColor = noteToSave!.barColor;
     final Color currentBodyColor = noteToSave!.bodyColor;
 
-    bool hasChanges = _originalNoteForComparison!.title != currentTitle ||
-                        _originalNoteForComparison!.richContentJson != currentContent ||
+    bool hasChanges = _originalNoteForComparison!.title != titleJson ||
+                        _originalNoteForComparison!.richContentJson != contentJson ||
                         _originalNoteForComparison!.barColor.value != currentBarColor.value ||
                         _originalNoteForComparison!.bodyColor.value != currentBodyColor.value;
 
@@ -206,15 +211,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       return;
     }
     
-    noteToSave!.title = currentTitle;
-    noteToSave!.richContentJson = currentContent;
+    noteToSave!.title = titleJson;
+    noteToSave!.richContentJson = contentJson;
     noteToSave!.modifiedTime = DateTime.now();
     
     await noteToSave!.save(); 
 
     _originalNoteForComparison = noteToSave!.copy;
     
-    print('Save complete for note: "${noteToSave!.title}"');
+    print('Save complete for note: "${quillJsonToPlainText(noteToSave!.title)}"');
 
     fillNoteList();
   }
@@ -222,12 +227,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void onSearchTextChanged(String searchText) {
     setState(() {
       filteredNotes = noteBox.values
-          .where((note) =>
-              (note.content.toLowerCase().contains(searchText.toLowerCase()) ||
-                  note.title
-                      .toLowerCase()
-                      .contains(searchText.toLowerCase())) &&
-              note.folder == cf)
+          .where((note) {
+            final titlePlain = quillJsonToPlainText(note.title).toLowerCase();
+            final contentPlain = quillJsonToPlainText(note.richContentJson).toLowerCase(); 
+            final query = searchText.toLowerCase();
+
+            return (titlePlain.contains(query) || contentPlain.contains(query)) && 
+                  note.folder == cf;
+          })
           .toList();
     });
   }
@@ -401,7 +408,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     text: TextSpan(
-                        text: '${currentNote.title} \n',
+                        text: '${quillJsonToPlainText(currentNote.title)} \n',
                         style: TextStyle(
                             color: cardDarkMode(currentNote),
                             fontWeight: FontWeight.bold,
@@ -554,15 +561,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         noteBox.values.where((note) => note.folder == cf).toList();
     int nextOrderIndex = notesInFolder.length;
 
-    final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+    final String titleText = _titleController.document.toPlainText().trim();
+    final String contentText = _quillController.document.toPlainText().trim();
 
-    if (_titleController.text.isNotEmpty ||
-        contentJson.isNotEmpty) {
+    if (titleText.isNotEmpty || contentText.isNotEmpty) {
+
+      String titleJson = jsonEncode(_titleController.document.toDelta().toJson());
+      String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+
       if (isEditing) {
-        if (note?.title != _titleController.text ||
-            note?.richContentJson != contentJson) {
+        if (note?.title != titleJson || note?.richContentJson != contentJson) {
           setState(() {
-            note?.title = _titleController.text;
+            note?.title = titleJson;
             note?.richContentJson = contentJson;
             note?.modifiedTime = DateTime.now();
             note?.save();
@@ -575,7 +585,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         noteToSave = note;
       } else {
         setState(() {
-            List<Note> notesInFolder = noteBox.values
+          List<Note> notesInFolder = noteBox.values
           .where((note) => note.folder == cf)
           .toList()
           .cast<Note>();
@@ -586,7 +596,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           }
 
           final Note newNote = Note(
-              title: _titleController.text,
+              title: titleJson,
               richContentJson: contentJson,
               modifiedTime: DateTime.now(),
               barColor: noteBarColor,
@@ -598,8 +608,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
           noteBox.add(newNote);
 
-          _titleController.clear();
-          _quillController.clear();
+          _titleController = quill.QuillController.basic();
+          _quillController = quill.QuillController.basic();
           
           newTitle = '';
           newContent = '';
@@ -971,6 +981,12 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
   tempNoteDialog([Note? note]) {
 
     final ValueNotifier<bool> isProcessingImageNotifier = ValueNotifier(false);
+    noteBarColor = Colors.yellow.shade50;
+    noteBodyColor = Colors.yellow.shade50;
+    Color newNoteBarColor = dymnomz;
+    Color newNoteBodyColor = dymnomz;
+
+    Color contrastColor = noteBodyDarkMode(note, newNoteBodyColor);
 
     setState(() {
       isEditing = (note != null);
@@ -992,7 +1008,21 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
     );
 
     if (isEditing) {
-      _titleController.text = note!.title;
+      try {
+        final doc = quill.Document.fromJson(jsonDecode(note!.title));
+        _titleController = quill.QuillController(
+          document: doc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      } on FormatException {
+        final doc = quill.Document()..insert(0, note!.title);
+        _titleController = quill.QuillController(
+          document: doc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+        note.title = jsonEncode(doc.toDelta().toJson());
+        note.save(); 
+      }
       try {
         final doc = quill.Document.fromJson(jsonDecode(note!.richContentJson));
         _quillController = quill.QuillController(
@@ -1014,7 +1044,7 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
         note.save(); 
       }
     } else {
-      _titleController.clear();
+      _titleController = quill.QuillController.basic();
       _quillController = quill.QuillController.basic(
         config: quill.QuillControllerConfig(clipboardConfig: clipboardConfig),
       );
@@ -1022,24 +1052,41 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
       noteBodyColor = Colors.yellow.shade50;
     }
 
-    _titleController.addListener(_onNoteChanged);
+    _titleSubscription?.cancel();
+    _titleSubscription = _titleController.document.changes.listen((_) {
+      _onNoteChanged();
+    });
     _quillSubscription?.cancel(); 
     _quillSubscription = _quillController.document.changes.listen((_) {
       _onNoteChanged();
     });
 
+    final FocusNode titleFocus = FocusNode();
+    final FocusNode bodyFocus = FocusNode();
+
+    final ValueNotifier<QuillController> activeControllerNotifier = ValueNotifier(_quillController);
+
+    void updateActiveController() {
+      if (titleFocus.hasFocus) {
+        activeControllerNotifier.value = _titleController;
+      } else if (bodyFocus.hasFocus) {
+        activeControllerNotifier.value = _quillController;
+      }
+    }
+
+    QuillSimpleToolbarConfig testconig = QuillSimpleToolbarConfig();
+
+    titleFocus.addListener(updateActiveController);
+    bodyFocus.addListener(updateActiveController);
+
     showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          noteBarColor = Colors.yellow.shade50;
-          noteBodyColor = Colors.yellow.shade50;
-          Color newNoteBarColor = dymnomz;
-          Color newNoteBodyColor = dymnomz;
           return StatefulBuilder(builder: (context, setState) {
 
             if(isEditing == false && _quillController.document.isEmpty()){
-              _titleController.clear();
+              _titleController = quill.QuillController.basic();
               _quillController = quill.QuillController.basic(
                 config: quill.QuillControllerConfig(clipboardConfig: clipboardConfig),
               );
@@ -1063,17 +1110,18 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                     children: [
                                       ReturnButton(
                                         onPressed: () {
-                                          _titleController.removeListener(_onNoteChanged);
+                                          if (isProcessingImageNotifier.value) return;
+                                          _titleSubscription?.cancel();
                                           _quillSubscription?.cancel();
-                                        
                                           _debounce?.cancel();
-                                          noteFunc(
-                                              noteBarColor, noteBodyColor, note);
+                                          noteFunc(noteBarColor, noteBodyColor, note);
                                           setState((){
                                             isEditing = false;
                                             _originalNoteForComparison = null;
                                         });
                                           fillNoteList();
+                                          titleFocus.dispose(); 
+                                          bodyFocus.dispose();
                                           Navigator.pop(context);
                                         },
                                         note: note,
@@ -1096,11 +1144,11 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                                 result ?? noteBarColor);
                                             if (result != null) {
                                               final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+                                              final String titleJson = jsonEncode(_titleController.document.toDelta().toJson());
                                               if (isEditing) {
                                                 setState(() {
                                                   note?.barColor = result;
-                                                  note?.title =
-                                                      _titleController.text;
+                                                  note?.title = titleJson;
                                                   note?.richContentJson = contentJson;
                                                   note?.save();
                                                   noteToSave?.barColor = result;
@@ -1108,7 +1156,7 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                               } else {
                                                 setState(() {
                                                   noteBarColor = result;
-                                                  newTitle = _titleController.text;
+                                                  newTitle = titleJson;
                                                   newContent = contentJson;
                                                 });
                                               }
@@ -1134,11 +1182,11 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                                 result ?? noteBodyColor);
                                             if (result != null) {
                                               final String contentJson = jsonEncode(_quillController.document.toDelta().toJson());
+                                              final String titleJson = jsonEncode(_titleController.document.toDelta().toJson());
                                               if (isEditing) {
                                                 setState(() {
                                                   note?.bodyColor = result;
-                                                  note?.title =
-                                                      _titleController.text;
+                                                  note?.title = titleJson;
                                                   note?.richContentJson = contentJson;
                                                   note?.save();
                                                   noteToSave?.bodyColor = result;
@@ -1146,7 +1194,7 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                               } else {
                                                 setState(() {
                                                   noteBodyColor = result;
-                                                  newTitle = _titleController.text;
+                                                  newTitle = titleJson;
                                                   newContent = contentJson;
                                                 });
                                               }
@@ -1155,15 +1203,31 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                           darkModeType: 2,
                                           note: note,
                                           color: newNoteBarColor),
-                                      quill.QuillToolbarColorButton(
-                                        controller: _quillController, 
-                                        isBackground: false,
-                                        options: quill.QuillToolbarColorButtonOptions(
-                                          iconData: Icons.format_color_text_rounded,
-                                          customOnPressedCallback: (controller, isBackground) {
-                                            return _onTextColorButtonPressed(controller);
-                                          },
-                                        ),
+                                      ValueListenableBuilder<QuillController>(
+                                        valueListenable: activeControllerNotifier,
+                                        builder: (context, activeController, child) {
+                                          return quill.QuillToolbarColorButton(
+                                            controller: activeController, 
+                                            isBackground: false,
+                                            options: quill.QuillToolbarColorButtonOptions(
+                                              iconTheme: quill.QuillIconTheme(
+                                                iconButtonUnselectedData: quill.IconButtonData(
+                                                  color: contrastColor,
+                                                ),
+                                              ),
+                                              iconData: Icons.format_color_text_rounded,
+                                              customOnPressedCallback: (controller, isBackground) {
+                                                return _onTextColorButtonPressed(activeController);
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      quill.QuillToolbarToggleStyleButton(
+                                        attribute: Attribute.ul,
+                                        options: testconig.buttonOptions.listBullets,
+                                        controller: _quillController,
+                                        baseOptions: testconig.buttonOptions.base,
                                       ),
                                       IconButton(
                                         onPressed: _onImageButtonPressed,
@@ -1214,66 +1278,91 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: TextField(
-                          cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                          controller: _titleController,
+                        padding: const EdgeInsets.fromLTRB(15, 8, 15, 8),
+                        child: DefaultTextStyle(
                           style: TextStyle(
-                              color: noteBodyDarkMode(note, newNoteBodyColor),
-                              fontSize: 20),
-                          decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Title',
-                              hintStyle: TextStyle(
-                                  color:
-                                      noteBodyDarkMode(note, newNoteBodyColor),
-                                  fontSize: 20)),
+                            color: contrastColor,
+                            fontSize: 20,
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.bold
+                          ),
+                          child: quill.QuillEditor(
+                            controller: _titleController,
+                            focusNode: titleFocus,
+                            scrollController: ScrollController(),
+                            config: quill.QuillEditorConfig(
+                              autoFocus: false,
+                              scrollable: false,
+                              expands: false,
+                              enableInteractiveSelection: true, 
+                              paintCursorAboveText: true,
+                              placeholder: "Enter a title",
+                              showCursor: true,
+                              scrollBottomInset: 0,
+                              textSelectionThemeData: TextSelectionThemeData(
+                                selectionColor: selectionColor,
+                                selectionHandleColor: contrastColor.withAlpha(67),
+                                cursorColor: contrastColor,
+                              ),
+                              onKeyPressed: (event, node) {
+                                if (event.logicalKey == LogicalKeyboardKey.enter) {
+                                  return KeyEventResult.handled;
+                                }
+                                return KeyEventResult.ignored;
+                              },
+                            ),
+                          ),
                         ),
                       ),
                       Expanded(
-                        child: quill.QuillEditor(
-                          controller: _quillController,
-                          focusNode: FocusNode(),
-                          scrollController: ScrollController(),
-                          config: quill.QuillEditorConfig(
-                            padding: const EdgeInsetsGeometry.symmetric(horizontal: 15),
-                            enableInteractiveSelection: true, 
-                            showCursor: true,
-                            scrollBottomInset: 0,
-                            autoFocus: true,
-                            textSelectionThemeData: TextSelectionThemeData(
-                              selectionColor: selectionColor,
-                              cursorColor: noteBodyDarkMode(note, newNoteBodyColor),
-                            ),
-                            embedBuilders: [
-                              ...FlutterQuillEmbeds.editorBuilders(
-                                imageEmbedConfig: QuillEditorImageEmbedConfig(
-                                  onImageClicked: (imagePath) {
-        
-                                    // 1. Create the ImageProvider (assuming it's a local file)
-                                    // We use FileImage because all your images are saved locally now
-                                    final imageProvider = FileImage(File(imagePath));
-
-                                    // 2. Create ElementSize
-                                    // We pass nulls so the Resizer defaults to the screen width (safe behavior)
-                                    const imageSize = ElementSize(null, null);
-
-                                    // 3. Show YOUR Custom Menu
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => CustomImageOptionsMenu(
-                                        controller: _quillController,
-                                        config: const QuillEditorImageEmbedConfig(),
-                                        imageSource: imagePath,
-                                        imageSize: imageSize,
-                                        readOnly: false, // We are editing
-                                        imageProvider: imageProvider,
-                                      ),
-                                    );
-                                  },
-                                )
+                        child: DefaultTextStyle(
+                          style: TextStyle(
+                            color: contrastColor,
+                            fontSize: 16,
+                            fontFamily: 'Roboto',
+                            letterSpacing: 0.5,
+                            height: 1.5
+                          ),
+                          child: quill.QuillEditor(
+                            controller: _quillController,
+                            focusNode: bodyFocus,
+                            scrollController: ScrollController(),
+                            config: quill.QuillEditorConfig(
+                              padding: const EdgeInsetsGeometry.symmetric(horizontal: 15),
+                              enableInteractiveSelection: true, 
+                              paintCursorAboveText: true,
+                              placeholder: "Type something here",
+                              showCursor: true,
+                              scrollBottomInset: 0,
+                              autoFocus: true,
+                              textSelectionThemeData: TextSelectionThemeData(
+                                selectionColor: selectionColor,
+                                selectionHandleColor: contrastColor.withAlpha(67),
+                                cursorColor: contrastColor,
                               ),
-                            ],
+                              embedBuilders: [
+                                HoverableImageEmbedBuilder(
+                                  config: QuillEditorImageEmbedConfig(
+                                    onImageClicked: (imagePath) {
+                                      final imageProvider = FileImage(File(imagePath));
+                                      const imageSize = ElementSize(null, null);
+                          
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => CustomImageOptionsMenu(
+                                          controller: _quillController,
+                                          config: const QuillEditorImageEmbedConfig(),
+                                          imageSource: imagePath,
+                                          imageSize: imageSize,
+                                          readOnly: false,
+                                          imageProvider: imageProvider,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       )

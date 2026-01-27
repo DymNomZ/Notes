@@ -15,6 +15,7 @@ bool askBeforeDeleting = true;
 
 Color dymnomz = const Color(0xFF0BFF00); // Easter Egg :p
 Color selectionColor = const Color.fromARGB(140, 228, 250, 255);
+Color defaultGray = const Color.fromARGB(255, 201, 201, 201);
 
 String basePath = '';
 
