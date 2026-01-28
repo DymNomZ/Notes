@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   List filteredFolders = [];
   final TextEditingController _folderName = TextEditingController();
   String cf = 'Notes';
+  String lastFolderKey = 'lastFolder';
   bool isMoving = false;
 
   fillNoteList() {
@@ -128,13 +130,27 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       setState(() {
         cf = data;
         fillNoteList();
+        lastFolderBox.put(lastFolderKey, cf);
       });
     });
     super.initState();
     checkFolderBox();
-    fillNoteList();
     checkWindowBox();
     fillFolderList();
+    
+    if (lastFolderBox.containsKey(lastFolderKey)) {
+      String? lastFolder = lastFolderBox.get(lastFolderKey);
+      if (lastFolder != null && folderBox.values.contains(lastFolder)) {
+        cf = lastFolder;
+      } else if (folderBox.isNotEmpty) {
+        cf = folderBox.values.first;
+      }
+    } else if (folderBox.isNotEmpty) {
+      cf = folderBox.values.first;
+    }
+
+
+    fillNoteList();
     // Start listening to app lifecycle events
     WidgetsBinding.instance.addObserver(this);
     _startAutosaveTimer();
@@ -225,6 +241,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void onSearchTextChanged(String searchText) {
+
+    if (searchText.isEmpty) {
+      fillNoteList();
+      return;
+    }
+
     setState(() {
       filteredNotes = noteBox.values
           .where((note) {
@@ -313,6 +335,29 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   _quillController.moveCursorToPosition(index + 1);
 }
 
+Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
+  return AnimatedBuilder(
+    animation: animation,
+    builder: (BuildContext context, Widget? child) {
+      final double animValue = Curves.easeInOut.transform(animation.value);
+      final double elevation = lerpDouble(0, 6, animValue)!;
+      final double scale = lerpDouble(1, 1.05, animValue)!;
+
+      return Transform.scale(
+        scale: scale,
+        child: Material(
+          elevation: elevation,
+          color: Colors.transparent,
+          shadowColor: selectionColor,
+          borderRadius: BorderRadius.circular(10),
+          child: child,
+        ),
+      );
+    },
+    child: child,
+  );
+}
+
   @override
   Widget build(BuildContext context) {
 
@@ -354,6 +399,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     itemCount: filteredNotes.length,
                     buildDefaultDragHandles: false,
                     onReorder: onReorderFunc,
+                    proxyDecorator: proxyDecorator,
                     itemBuilder: (context, index) {
                       Note currentNote = filteredNotes[index];
                       return buildNoteCard(currentNote, index, false);
@@ -362,6 +408,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   : ReorderableGridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: currentAxisCount, childAspectRatio: currentAspectRatio),
+                  dragWidgetBuilder: (index, child) {
+                    return proxyDecorator(child, index, const AlwaysStoppedAnimation(1.0));
+                  },
                   itemCount: filteredNotes.length,
                   onReorder: onReorderFunc,
                   itemBuilder: (context, index) {
@@ -452,8 +501,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     },
                     note: currentNote
                   ),
-                  if (!isGridView) ...[
-                    const SizedBox(height: 8),
+                  const SizedBox(height: 8),
                     ReorderableDragStartListener(
                       index: index,
                       child: MouseRegion(
@@ -465,7 +513,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         )
                       ),
                     ),
-                  ],
                   const SizedBox(height: 8),
                   DeleteNoteButton(
                     onPressed: () async {
@@ -625,7 +672,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     showDialog(
         context: context,
         builder: (BuildContext context) {
-          return StatefulBuilder(builder: (context, setState) {
+          return StatefulBuilder(builder: (context, dialogSetState) {
             return Scaffold(
                 backgroundColor: userWindow.bodyColor,
                 body: Column(
@@ -640,103 +687,39 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               children: [
                                 Row(
                                   children: [
-                                    // ReturnButton2(onPressed: () {
-                                    //   if (isMoving) {
-                                    //     setState(() => isMoving = false);
-                                    //   }
-                                    //   Navigator.pop(context);
-                                    // }),
-                                    AddNoteButton(onPressed: () async {
+                                    if (isMoving)
+                                    ReturnButton2(onPressed: () {
+                                      setState(() => isMoving = false);
+                                      Navigator.pop(context);
+                                    }),
+                                    if (!isMoving)
+                                    AddButton(onPressed: () async {
                                       if (isMoving == false) {
                                         final result = await showDialog(
                                             context: context,
                                             builder: (context) {
-                                              return Dialog(
-                                                child: Container(
-                                                  height: 150.0,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.all(
-                                                            Radius.circular(
-                                                                15.0)),
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: Column(
-                                                    children: [
-                                                      const Padding(
-                                                        padding: EdgeInsets.all(
-                                                            10.0),
-                                                        child: Text(
-                                                          'Add Folder',
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 20),
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal:
-                                                                    10.0),
-                                                        child: TextField(
-                                                            controller:
-                                                                _folderName,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                fontSize: 16),
-                                                            maxLines: 1,
-                                                            decoration:
-                                                                const InputDecoration(
-                                                              border:
-                                                                  InputBorder
-                                                                      .none,
-                                                              hintText:
-                                                                  'New Folder',
-                                                              hintStyle: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 16),
-                                                            )),
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          ConfirmButton(
-                                                              onPressed: () {
-                                                            setState(() {
-                                                              folderBox.put(
-                                                                  _folderName
-                                                                      .text,
-                                                                  _folderName
-                                                                      .text);
-                                                              fillFolderList();
-                                                              _folderName.clear();
-                                                            });
-                                                            Navigator.pop(
-                                                                context);
-                                                          }),
-                                                          const CancelButton(),
-                                                        ],
-                                                      )
-                                                    ],
-                                                  ),
-                                                ),
+                                              return FolderTitlePrompt(
+                                                folderName: _folderName,
+                                                dialogSetState: dialogSetState,
+                                                fillFolderList:  fillFolderList,
+                                                isEditing: false,
                                               );
                                             });
+                                            print(result + " aaaaaaaaaaaa");
+                                            if(result != null && result is String){
+                                                dialogSetState(() {
+                                                folderBox.put(result, result);
+                                                fillFolderList();
+                                                _folderName.clear();
+                                              });
+                                              setState(() {
+                                                fillFolderList();
+                                              });
+                                            }
                                         return result;
                                       }
                                     }),
+                                    if (!isMoving)
                                     ShowInfoButton(onPressed: () async {
                                       final result = await showDialog(
                                         context: context,
@@ -812,7 +795,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 itemCount: filteredFolders.length,
                                 itemBuilder: (context, index) {
                                   String currFold = filteredFolders[index];
-                                  return buildFolderCard(currFold, note); 
+                                  return buildFolderCard(currFold, note, dialogSetState); 
                                 },
                               );
                             } else {
@@ -820,7 +803,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 itemCount: filteredFolders.length,
                                 itemBuilder: (context, index) {
                                   String currFold = filteredFolders[index];
-                                  return buildFolderCard(currFold, note);
+                                  return buildFolderCard(currFold, note, dialogSetState);
                                 },
                               );
                             }
@@ -842,7 +825,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         });
   }
 
-  Widget buildFolderCard(String currFold, Note? note) {
+  Widget buildFolderCard(String currFold, Note? note, Function dialogSetState) {
     return Card(
       key: ValueKey(currFold),
       margin:
@@ -858,18 +841,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           child: ListTile(
               onTap: () {
                 if (isMoving) {
-                  setState(() {
-                    note?.folder = currFold;
-                    note?.save();
-                    fillNoteList();
-                    isMoving = false;
-                  });
-                } else {
-                  setState(() {
-                    folderStream.sink.add(currFold);
-                    fillNoteList();
-                  });
+                  note?.folder = currFold;
+                  note?.save();
+                  isMoving = false;
                 }
+                folderStream.sink.add(currFold);
                 Navigator.pop(context);
               },
               leading: Padding(
@@ -892,36 +868,81 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         fontSize: 18,
                         height: 1.4),
                   )),
-              trailing: (currFold == 'Notes')
+              trailing: (isMoving)
               ? null
-              : DeleteFolderButton(
-                  onPressed: () async {
-                  final result =
-                      await showDialog(
-                    context: context,
-                    builder: (_) =>
-                        const ConfirmDelete(),
-                  );
-                  if (result != null &&
-                      result) {
-                    setState(() {
-                      filteredFolders.remove(currFold);
-                      folderBox.delete(currFold);
-                      List temp = noteBox.values.toList();
-                      for (int i = 0; i < temp.length; i++) {
-                        if (temp[i].folder == currFold) {
-                          Note tempNote = temp[i];
-                          tempNote.delete();
-                        }
+              : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  EditFolderButton(
+                    onPressed: () async {
+                      _folderName.text = currFold;
+                      final result = await showDialog(
+                        context: context,
+                        builder: (_) =>
+                          FolderTitlePrompt(
+                          folderName: _folderName,
+                          dialogSetState: dialogSetState,
+                          fillFolderList: fillFolderList,
+                          isEditing: true,
+                        ),
+                      );
+                      print(result + " aaaaaaaaaaaa");
+                      if(result != null && result is String){
+                        dialogSetState(() {
+                          folderBox.delete(currFold);
+                          folderBox.put(result, result);
+
+                          List temp = noteBox.values.toList();
+                          for (int i = 0; i < temp.length; i++) {
+                            if (temp[i].folder == currFold) {
+                              Note tempNote = temp[i];
+                              tempNote.folder = result;
+                              tempNote.save();
+                            }
+                          }
+                          
+                          fillFolderList();
+                          _folderName.clear();
+                        });
+                        setState(() {
+                          fillFolderList();
+                        });
                       }
-                      fillFolderList();
-                      if (cf == currFold) {
-                        folderStream.sink.add('Notes');
-                        Navigator.pop(context);
+                      // uncomment this if like mo adto sa edited/added folder
+                        // setState(() {
+                        //   fillFolderList();
+                        //   if (cf == currFold) {
+                        //     folderStream.sink.add(result);
+                        //   }
+                        // });
+                    }
+                  ),
+                  if (filteredFolders.length > 1)
+                  DeleteFolderButton(
+                      onPressed: () async {
+                      final result = await showDialog(
+                        context: context,
+                        builder: (_) =>
+                            const ConfirmDelete(),
+                      );
+                      if (result != null && result) {
+                        dialogSetState(() {
+                          filteredFolders.remove(currFold);
+                          folderBox.delete(currFold);
+                          List temp = noteBox.values.toList();
+                          for (int i = 0; i < temp.length; i++) {
+                            if (temp[i].folder == currFold) {
+                              Note tempNote = temp[i];
+                              tempNote.delete();
+                            }
+                          }
+                          fillFolderList();
+                        });
                       }
-                    });
-                  }
-    }))));
+                    }
+                  ),
+                ],
+              ))));
   }
 
   Future<void> _onTextColorButtonPressed(quill.QuillController controller) async {
@@ -1225,7 +1246,13 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                       ),
                                       quill.QuillToolbarToggleStyleButton(
                                         attribute: Attribute.ul,
-                                        options: testconig.buttonOptions.listBullets,
+                                        options: quill.QuillToolbarToggleStyleButtonOptions(
+                                          iconTheme: quill.QuillIconTheme(
+                                            iconButtonUnselectedData: quill.IconButtonData(
+                                              color: contrastColor,
+                                            ),
+                                          ),
+                                        ),
                                         controller: _quillController,
                                         baseOptions: testconig.buttonOptions.base,
                                       ),

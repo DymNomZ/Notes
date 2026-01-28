@@ -35,17 +35,17 @@ void main() async {
   windowBox = await Hive.openBox<Window>('windowBox');
   folderBox = await Hive.openBox<String>('folderBox');
   settingsBox = await Hive.openBox<bool>('settingsBox');
+  lastFolderBox = await Hive.openBox<String>('lastFolderBox');
 
   stayOnTop = settingsBox.get('stayOnTop', defaultValue: stayOnTop);
-  askBeforeDeleting =
-      settingsBox.get('askBeforeDeleting', defaultValue: askBeforeDeleting);
+  askBeforeDeleting = settingsBox.get('askBeforeDeleting', defaultValue: askBeforeDeleting);
 
   windowManager.setAlwaysOnTop(stayOnTop);
   cleanupOrphanedImages();
 
   runApp(const MyApp());
   doWhenWindowReady(() {
-    const initialSize = Size(350, 350);
+    const initialSize = Size(375, 375);
     appWindow.minSize = initialSize;
     appWindow.size = initialSize;
     appWindow.alignment = Alignment.center;

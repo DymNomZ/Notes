@@ -601,3 +601,78 @@ class _ConfirmDeleteState extends State<ConfirmDelete> {
     ));
   }
 }
+
+class FolderTitlePrompt extends StatefulWidget {
+  TextEditingController folderName;
+  Function dialogSetState;
+  Function fillFolderList;
+  bool isEditing;
+
+  FolderTitlePrompt({
+    required this.folderName, 
+    required this.dialogSetState,
+    required this.fillFolderList,
+    required this.isEditing,
+    super.key});
+
+  @override
+  State<FolderTitlePrompt> createState() => _FolderTitlePromptState();
+}
+
+class _FolderTitlePromptState extends State<FolderTitlePrompt> {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        height: 150.0,
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(15.0)),
+          color: Colors.white,
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Text(
+                (!widget.isEditing) ? 'Add Folder' : 'Edit Folder',
+                style: const TextStyle(
+                    fontWeight:FontWeight.bold,
+                    fontSize: 20),
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10.0),
+              child: TextField(
+                  controller: widget.folderName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
+                  maxLines: 1,
+                  decoration:
+                      const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Folder name',
+                    hintStyle: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16
+                      ),
+                  )),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ConfirmButton(
+                    onPressed: () {
+                  Navigator.pop(context, widget.folderName.text);
+                }),
+                const CancelButton(),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}

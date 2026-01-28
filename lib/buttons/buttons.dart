@@ -18,9 +18,9 @@ class SettingsButton extends StatelessWidget {
     );
   }
 }
-class AddNoteButton extends StatelessWidget {
+class AddButton extends StatelessWidget {
   final void Function() onPressed;
-  const AddNoteButton({required this.onPressed, super.key});
+  const AddButton({required this.onPressed, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +128,23 @@ class DeleteFolderButton extends StatelessWidget {
       onPressed: onPressed, 
       icon: Icon(
         Icons.delete,
+        size: 25,
+        color: windowBodyDarkMode()
+      )
+    );
+  }
+}
+
+class EditFolderButton extends StatelessWidget {
+  final void Function() onPressed;
+  const EditFolderButton({required this.onPressed, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed, 
+      icon: Icon(
+        Icons.edit,
         size: 25,
         color: windowBodyDarkMode()
       )

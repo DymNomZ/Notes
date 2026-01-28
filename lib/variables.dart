@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:ui';
 
-import 'package:flutter_quill/flutter_quill.dart';
-
 List<String> exitText = ["Let's call it a day 😌", "Leaving already? 🤔", "That's a wrap! 💪", 
                           "Goodbye 👋", "Goodjob 🙌", "Work done ✅"];
 String currentFolder = 'Notes';
