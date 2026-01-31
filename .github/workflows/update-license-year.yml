@@ -1,0 +1,39 @@
+name: Update License Year
+
+on:
+  schedule:
+    # Run at 00:00 on January 1st every year
+    - cron: '0 0 1 1 *'
+  # Allows you to run it manually to test it
+  workflow_dispatch:
+
+jobs:
+  update-year:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push the commit back to your repo
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Update Year in LICENSE
+        run: |
+          CURRENT_YEAR=$(date +%Y)
+          
+          sed -i "s/Copyright (c) 2024 - [0-9]\{4\}/Copyright (c) 2024 - $CURRENT_YEAR/g" LICENSE
+          
+          sed -i "s/Copyright (c) 2024 /Copyright (c) 2024 - $CURRENT_YEAR /g" LICENSE
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          if [[ -n $(git status -s) ]]; then
+            git add LICENSE
+            git commit -m "docs: update license year to $(date +%Y)."
+            git push
+          else
+            echo "No changes needed. It's already up to date!"
+          fi
