@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Notes!"
-#define MyAppVersion "4.2.0"
+#define MyAppVersion "5.0.0"
 #define MyAppPublisher "DymNomZ@GitHub"
-#define MyAppURL "https://github.com/DymNomZ/NotesClone/"
+#define MyAppURL "https://github.com/DymNomZ/Notes/"
 #define MyAppExeName "notesclonedym.exe"
 
 [Setup]
@@ -38,6 +38,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\bitsdojo_window_windows_plugin.lib"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\desktop_multi_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\file_selector_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\notesclonedym.exp"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\dymno\Desktop\Notes\build\windows\x64\runner\Release\notesclonedym.lib"; DestDir: "{app}"; Flags: ignoreversion
