@@ -1,9 +1,5 @@
 #!/bin/sh
-# Wrapper script for NotesCloneDym
 
-# Set the library path to include our app's custom lib folder
 export LD_LIBRARY_PATH="/usr/lib/notesclonedym/lib"
 
-# Launch the actual application binary
-# The exec command replaces the script process with the app process
 exec /usr/lib/notesclonedym/notesclonedym.real "$@"
