@@ -52,6 +52,7 @@ dependencies:
   image_picker: ^1.2.1
   image: ^4.7.2
   path: ^1.9.1
+  desktop_multi_window: ^0.3.0
 
 dev_dependencies:
   flutter_test:

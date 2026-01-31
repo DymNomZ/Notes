@@ -453,26 +453,26 @@ Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
                     setState(() => isEditing = true);
                     tempNoteDialog(currentNote);
                   },
-                  title: RichText(
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                        text: '${quillJsonToPlainText(currentNote.title)} \n',
-                        style: TextStyle(
-                            color: cardDarkMode(currentNote),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            height: 1.5),
-                        children: [
-                          TextSpan(
-                            text: quillJsonToPlainText(currentNote.richContentJson),
-                            style: TextStyle(
-                                color: cardDarkMode(currentNote),
-                                fontWeight: FontWeight.normal,
-                                fontSize: 13,
-                                height: 1.5),
-                          )
-                        ]),
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichContentPreview(
+                        jsonContent: currentNote.title,
+                        textColor: cardDarkMode(currentNote),
+                        maxLines: 1,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        showGradient: false,
+                      ),
+                      const SizedBox(height: 4),
+                      RichContentPreview(
+                        jsonContent: currentNote.richContentJson,
+                        textColor: cardDarkMode(currentNote),
+                        maxLines: 2,
+                        fontSize: 13,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ],
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -1249,7 +1249,7 @@ Future<String?> _processAndSaveImage(Uint8List imageBytes, String extension) asy
                                         options: quill.QuillToolbarToggleStyleButtonOptions(
                                           iconTheme: quill.QuillIconTheme(
                                             iconButtonUnselectedData: quill.IconButtonData(
-                                              color: contrastColor,
+                                              color: noteBarDarkMode(note, newNoteBarColor),
                                             ),
                                           ),
                                         ),
