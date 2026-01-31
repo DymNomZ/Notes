@@ -447,41 +447,41 @@ Widget proxyDecorator(Widget child, int index, Animation<double> animation) {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(left: 10.0),
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  onTap: () {
-                    setState(() => isEditing = true);
-                    tempNoteDialog(currentNote);
-                  },
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichContentPreview(
-                        jsonContent: currentNote.title,
-                        textColor: cardDarkMode(currentNote),
-                        maxLines: 1,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        showGradient: false,
-                      ),
-                      const SizedBox(height: 4),
-                      RichContentPreview(
-                        jsonContent: currentNote.richContentJson,
-                        textColor: cardDarkMode(currentNote),
-                        maxLines: 2,
-                        fontSize: 13,
-                        fontWeight: FontWeight.normal,
-                      ),
-                    ],
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                          color: cardDarkMode(currentNote)),
+                child: IntrinsicHeight(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() => isEditing = true);
+                      tempNoteDialog(currentNote);
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RichContentPreview(
+                          jsonContent: currentNote.title,
+                          textColor: cardDarkMode(currentNote),
+                          maxLines: 1,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          showGradient: false,
+                        ),
+                        const SizedBox(height: 4),
+                        RichContentPreview(
+                          jsonContent: currentNote.richContentJson,
+                          textColor: cardDarkMode(currentNote),
+                          maxLines: 2,
+                          fontSize: 13,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Edited: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.modifiedTime)}\nCreated on: ${DateFormat('EEE MMM d, yyyy h:mm a').format(currentNote.creationTime)}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: cardDarkMode(currentNote)),
+                        ),
+                      ],
                     ),
                   ),
                 ),
