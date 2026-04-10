@@ -21,7 +21,7 @@ Whether its a to-do list, exam pointers, or pasting a funny meme. Notes! got you
 ## ✨Features!
 
 #### ✨ Rich Text & Images 🌅
-- Give your notes some flair with font colors and formatting! Highlight a text and perform Ctrl + b for **bold**, i for *italic*, and u for underline.
+- Give your notes some flair with font colors and formatting! Highlight a text and perform `Ctrl + b` for **bold**, `i` for *italic*, and `u` for underline. You can also do `Ctrl + Shift + s` for ~~strikethrough~~.
 - Insert (or paste) an image and tap to resize it to your preferred size!
 
 #### 🎨 Colors
